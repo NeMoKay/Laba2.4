@@ -14,7 +14,7 @@
 template <typename T >
 class ListSequence : public Sequence<T>{
 private:
-    LinkedList<T>* items;
+    LinkedList<T> items;
 
 protected:
     virtual ListSequence<T>* Clone() const;
@@ -25,18 +25,20 @@ protected:
     void InsertAtInternal(T item, size_t index);
     void SetInternal(size_t index, T item);
     void ConcatInternal(Sequence<T>* list);
+    Sequence<T>* DoReflectSum() const override;
+
 
 public:
     ListSequence();
-    ListSequence(T* new_items, size_t count);
+    
+    template <size_t N>
+    ListSequence(T (&arr)[N]);
+    
     ListSequence(const ListSequence<T>& list);
-    ListSequence(const ArraySequence<T>& arraySeq);
 
     T GetFirst() const override;
     T GetLast() const override;
     T Get(size_t index) const override;
-
-    Sequence<T> *ReflectSum() const override;
 
     ListSequence<T>* GetSubsequence(size_t startIndex, size_t endIndex) const override;
 
@@ -47,6 +49,10 @@ public:
     ListSequence<T>* InsertAt(T item, size_t index) override;
     ListSequence<T>* Set(size_t index, T item) override;
     Sequence<T>* Concat(Sequence<T>* list_p) override;
+
+    using Iterator = typename LinkedList<T>::Iterator;
+    Iterator begin() const{ return items.begin(); }
+    Iterator end() const{ return items.end(); }
 
     ~ListSequence();
 };
@@ -65,20 +71,20 @@ ListSequence<T>* ListSequence<T>::Instance(){
 
 template <typename T >
 void ListSequence<T>::AppendInternal(T item){
-    items->Append(item);
+    items.Append(item);
 }
 
 template <typename T >
 void ListSequence<T>::PrependInternal(T item){
-    items->Prepend(item);
+    items.Prepend(item);
 }
 
 template <typename T >
 void ListSequence<T>::InsertAtInternal(T item, size_t index){
-    if(index > items->GetLength()){
-        throw IndexOutOfRangeException(std::format("Индекс вне диапазона (индекс: {}, максимум: {})", index, items->GetLength()));
+    if(index > items.GetLength()){
+        throw IndexOutOfRangeException(std::format("Индекс вне диапазона (индекс: {}, максимум: {})", index, items.GetLength()));
     }
-    items->InsertAt(item, index);
+    items.InsertAt(item, index);
 }
 
 template <typename T >
@@ -88,7 +94,7 @@ void ListSequence<T>::ConcatInternal(Sequence<T>* list){
     }
 
     for(size_t i = 0; i < list->GetLength(); i++){
-        items->Append(list->Get(i));
+        items.Append(list->Get(i));
     }
 }
 
@@ -97,62 +103,54 @@ void ListSequence<T>::ConcatInternal(Sequence<T>* list){
 // public
 
 template <typename T >
-ListSequence<T>::ListSequence() : items(new LinkedList<T>) {}
+ListSequence<T>::ListSequence() : items() {}
+
+template <typename T>
+template <size_t N>
+ListSequence<T>::ListSequence(T (&arr)[N]) : items(arr) {}
 
 template <typename T >
-ListSequence<T>::ListSequence(T* new_items, size_t count) : items(new LinkedList<T>(new_items, count)) {}
-
-template <typename T >
-ListSequence<T>::ListSequence(const ListSequence<T>& list) : items(new LinkedList<T>(*(list.items))) {}
-
-template <typename T >
-ListSequence<T>::ListSequence(const ArraySequence<T>& arraySeq) : ListSequence(){
-
-    size_t count = arraySeq.GetLength();
-
-    for(size_t i = 0; i < count; ++i){
-        items->Append(arraySeq.Get(i));
-    }
-}
+ListSequence<T>::ListSequence(const ListSequence<T>& list) : items(list.items) {}
 
 template <typename T >
 T ListSequence<T>::GetFirst() const{
-    return items->GetFirst();
+    return items.GetFirst();
 }
 
 template <typename T >
 T ListSequence<T>::GetLast() const{
-    return items->GetLast();
+    return items.GetLast();
 }
 
 template <typename T >
 T ListSequence<T>::Get(size_t index) const{
-    return items->Get(index);
+    return items.Get(index);
 }
 
 template <typename T >
 ListSequence<T>* ListSequence<T>::GetSubsequence(size_t startIndex, size_t endIndex) const{
 
-    if(endIndex < startIndex || startIndex >= items->GetLength() || endIndex >= items->GetLength()){
+    if(endIndex < startIndex || startIndex >= items.GetLength() || endIndex >= items.GetLength()){
 
-        throw IndexOutOfRangeException(std::format("Ошибка индекса (start: {}, end: {}, size: {})", startIndex, endIndex, items->GetLength()));
+        throw IndexOutOfRangeException(std::format("Ошибка индекса (start: {}, end: {}, size: {})", startIndex, endIndex, items.GetLength()));
     }
 
     LinkedList<T>* items_sub_list;
-    items_sub_list = items->GetSubList(startIndex, endIndex);
+    items_sub_list = items.GetSubList(startIndex, endIndex);
 
     ListSequence<T>* Sub_list = new ListSequence<T>;
 
     for(size_t i = 0; i < items_sub_list->GetLength(); i++){
         Sub_list->Append(items_sub_list->Get(i));
     }
-
+    
+    delete items_sub_list;
     return Sub_list;
 }
 
 template <typename T>
 size_t ListSequence<T>::GetLength() const{
-    return items->GetLength();
+    return items.GetLength();
 }
 
 template <typename T>
@@ -172,8 +170,8 @@ ListSequence<T>* ListSequence<T>::Prepend(T item){
 template <typename T>
 ListSequence<T>* ListSequence<T>::InsertAt(T item, size_t index){
 
-    if(index > items->GetLength()){
-        throw IndexOutOfRangeException(std::format("Индекс вне диапазона (индекс: {}, максимум: {})", index, items->GetLength()));
+    if(index > items.GetLength()){
+        throw IndexOutOfRangeException(std::format("Индекс вне диапазона (индекс: {}, максимум: {})", index, items.GetLength()));
     }
 
     ListSequence<T>* list = Instance();
@@ -199,13 +197,11 @@ Sequence<T>* ListSequence<T>::Concat(Sequence<T>* list_p){
 }
 
 template <typename T>
-ListSequence<T>::~ListSequence(){
-    delete items;
-}
+ListSequence<T>::~ListSequence() {}
 
 template <typename T>
 void ListSequence<T>::SetInternal(size_t index, T item){
-    items->Set(index, item);
+    items.Set(index, item);
 }
 template <typename T>
 ListSequence<T>* ListSequence<T>::Set(size_t index, T item){
@@ -247,34 +243,32 @@ public:
 
 
 template <typename T>
-Sequence<T>* ListSequence<T>::ReflectSum() const{
-    if constexpr (is_arithmetic_v<T>){
-        size_t len = this->GetLength();
-
-        if (len == 0){
-            throw EmptySequenceException("ReflectSum: список пуст");
-        }
-        
-        T* arr = new T[len];
-        for(size_t i = 0; i < len; ++i){
-            arr[i] = this->Get(i) + this->Get(len - 1 - i);
-        }  
-
-        Sequence<T>* result = new ListSequence<T>(arr, len);
-        delete[] arr;
-        return result;
-    } 
-    else{
-        throw InvalidSizeException("доступна только для числовых типов");
-    }
+Sequence<T>* ListReflectSumImpl(const ListSequence<T>* seq) requires std::is_arithmetic_v<T>{
+    size_t len = seq->GetLength();
+    ListSequence<T>* result = new ListSequence<T>();
+    for(size_t i = 0; i < len; ++i){
+        result->Append(seq->Get(i) + seq->Get(len - 1 - i));
+    }  
+    return result;
 }
+
+template <typename T>
+Sequence<T>* ListReflectSumImpl(const ListSequence<T>* seq) requires (!std::is_arithmetic_v<T>){
+    return nullptr;
+}
+
+template <typename T>
+Sequence<T>* ListSequence<T>::DoReflectSum() const{
+    return ListReflectSumImpl<T>(this);
+}
+
 
 
 template <typename T, typename T2>
 ListSequence<T2>* Map(ListSequence<T>* seq, T2 (*func)(T)){
     ListSequence<T2>* result = new ListSequence<T2>();
-    for(size_t i = 0; i < seq->GetLength(); i++){
-        result->Append(func(seq->Get(i)));
+    for(auto item : *seq){
+        result->Append(func(item));
     }
     return result;
 }
@@ -282,8 +276,8 @@ ListSequence<T2>* Map(ListSequence<T>* seq, T2 (*func)(T)){
 template <typename T, typename T2>
 T2 Reduce(ListSequence<T>* seq, T2 (*func)(T2, T), T2 start_val){
     T2 result = start_val;
-    for(size_t i = 0; i < seq->GetLength(); i++){
-        result = func(result, seq->Get(i));
+    for(auto item : *seq){
+        result = func(result, item);
     }
     return result;
 }
@@ -291,8 +285,7 @@ T2 Reduce(ListSequence<T>* seq, T2 (*func)(T2, T), T2 start_val){
 template <typename T>
 ListSequence<T>* Where(ListSequence<T>* seq, bool (*check_func)(T)){
     ListSequence<T>* result = new ListSequence<T>();
-    for(size_t i = 0; i < seq->GetLength(); i++){
-        T item = seq->Get(i);
+    for(auto item : *seq){
         if(check_func(item)){
             result->Append(item);
         }

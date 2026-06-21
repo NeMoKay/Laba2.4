@@ -4,7 +4,6 @@ CXXFLAGS = -std=c++23 -Iinclude -I/opt/homebrew/include
 LDLIBS   = -L/opt/homebrew/lib -lgtest -lgtest_main -lpthread
 
 SRC_MAIN = src/main.cpp
-SRC_SERVER = src/web_server.cpp
 
 TEST_SRCS = $(wildcard tests/*.cpp) 
 
@@ -14,21 +13,23 @@ main: $(OBJ_MAIN)
 	$(CXX) $^ -o $@ $(CXXFLAGS)
 	./$@
 
-server: 
-	$(CXX) $(SRC_SERVER) -o web_interface $(CXXFLAGS) -lpthread
-	@echo "Opening browser in 1 second..."
-	@(sleep 1 && open http://localhost:8080) &
-	./web_interface
-
 test: $(TEST_SRCS)
 	$(CXX) $^ -o test $(CXXFLAGS) $(LDLIBS)
 	./test
+
+ui:
+	@echo "Сборка Qt интерфейса через CMake..."
+	mkdir -p ui_ui/build
+	cd ui_ui/build && cmake .. && $(MAKE)
+	@echo "Запуск интерфейса..."
+	open ui_ui/build/ui_ui.app
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
 	rm -f $(OBJ_MAIN) main test
-	rm -f web_interface
+	rm -rf ui_ui/build
+	find . -name ".DS_Store" -type f -delete
 
-.PHONY: main test clean run_server clean_web server
+.PHONY: main test clean ui

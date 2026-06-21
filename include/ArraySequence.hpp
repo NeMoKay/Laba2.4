@@ -13,7 +13,7 @@
 template <typename T>
 class ArraySequence : public Sequence<T>{
 private:
-    DynamicArray<T>* items;
+    DynamicArray<T> items;
 protected:
     virtual ArraySequence<T>* Clone() const;
     virtual ArraySequence<T>* Instance();
@@ -23,12 +23,15 @@ protected:
     void InsertAtInternal(T item, size_t index);
     void SetInternal(size_t index, T item);
     void ConcatInternal(Sequence <T> *list);
+    Sequence<T>* DoReflectSum() const override;
+
     
 public:
 
-    ArraySequence(T* new_items, size_t count);
+    template <size_t N>
+    ArraySequence(T (&arr)[N]);
+    
     ArraySequence();
-    ArraySequence(const LinkedList<T>& list);
     ArraySequence(const ArraySequence<T>& operand);
 
     T GetFirst() const override;
@@ -41,7 +44,11 @@ public:
     ArraySequence<T>* InsertAt(T item, size_t index) override;
     ArraySequence<T>* Set(size_t index, T item) override;
     ArraySequence<T>* Concat(Sequence<T>* list) override;
-    Sequence<T> *ReflectSum() const override;
+
+    using Iterator = typename DynamicArray<T>::Iterator;
+
+    Iterator begin() const{return items.begin();  }
+    Iterator end() const{return items.end(); }
     
     ~ArraySequence();
 };
@@ -61,23 +68,23 @@ ArraySequence<T>* ArraySequence<T>::Instance(){
 
 template <typename T >
 void ArraySequence<T>::AppendInternal(T item){
-    items->Resize(items->GetSize()+1);
-    items->Set(items->GetSize()-1, item);
+    items.Resize(items.GetSize()+1);
+    items.Set(items.GetSize()-1, item);
 }
 
 template <typename T >
 void ArraySequence<T>::PrependInternal(T item){
-    items->Resize(items->GetSize()+1);
-    for(size_t i = items->GetSize() - 1; i >= 1; i--){
-        items->Set(i, items->Get(i-1));
+    items.Resize(items.GetSize()+1);
+    for(size_t i = items.GetSize() - 1; i >= 1; i--){
+        items.Set(i, items.Get(i-1));
     }
-    items->Set(0, item);
+    items.Set(0, item);
 }
 
 template <typename T >
 void ArraySequence<T>::InsertAtInternal(T item, size_t index){
-    if(index > items->GetSize()){
-        throw IndexOutOfRangeException(std::format("Ошибка индекса (переданный инндекс {} > максимальный индекс последовательности {})",index,  items->GetSize() - 1));
+    if(index > items.GetSize()){
+        throw IndexOutOfRangeException(std::format("Ошибка индекса (переданный инндекс {} > максимальный индекс последовательности {})",index,  items.GetSize() - 1));
     }
 
     if(index == 0){
@@ -85,17 +92,17 @@ void ArraySequence<T>::InsertAtInternal(T item, size_t index){
         return;
     }
     
-    if(index == items->GetSize()){
+    if(index == items.GetSize()){
         AppendInternal(item);
         return;
     }
 
-    items->Resize(items->GetSize() + 1);
-    for(size_t i = items->GetSize() - 1; i > index; --i){
-        items->Set(i, items->Get(i - 1));
+    items.Resize(items.GetSize() + 1);
+    for(size_t i = items.GetSize() - 1; i > index; --i){
+        items.Set(i, items.Get(i - 1));
     }
     
-    items->Set(index, item);
+    items.Set(index, item);
 }
 
 template <typename T >
@@ -108,70 +115,55 @@ void ArraySequence<T>::ConcatInternal(Sequence <T> *list){
 
 
 //public
-template <typename T >
-ArraySequence<T>::ArraySequence(T* new_items, size_t count) : items(new DynamicArray<T>(new_items, count)) {}
+template <typename T>
+template <size_t N>
+ArraySequence<T>::ArraySequence(T (&arr)[N]) : items(arr) {}
 
 template <typename T >
-ArraySequence<T>::ArraySequence() : items(new DynamicArray<T>) {}
+ArraySequence<T>::ArraySequence() : items() {}
 
 template <typename T >
-ArraySequence<T>::ArraySequence(const ArraySequence<T>& operand) : items(new DynamicArray<T>(*(operand.items))) {}
-
-template <typename T >
-ArraySequence<T>::ArraySequence(const LinkedList<T>& list){
-    size_t count = list.GetLength();
-    if(count == 0){
-        items = new DynamicArray<T>;
-        return;
-    }
-    T* temp_arr = new T[count];
-
-    for(size_t i = 0; i < count; ++i){
-        temp_arr[i] = list.Get(i);
-    }
-    items = new DynamicArray<T>(temp_arr, count);
-    delete[] temp_arr;
-}
+ArraySequence<T>::ArraySequence(const ArraySequence<T>& operand) : items(operand.items) {}
 
 template <typename T >
 T ArraySequence<T>::GetFirst() const{
-    if(items->GetSize() == 0){
+    if(items.GetSize() == 0){
         throw EmptySequenceException("Список пуст");
     }
-    return items->Get(0);
+    return items.Get(0);
 }
 
 template <typename T >
 T ArraySequence<T>::GetLast() const{
-    if(items->GetSize() == 0){
+    if(items.GetSize() == 0){
         throw EmptySequenceException("Список пуст");
     }
-    return items->Get(items->GetSize() - 1);
+    return items.Get(items.GetSize() - 1);
 }
 
 template <typename T >
 T ArraySequence<T>::Get(size_t index)const{
-    if(index >= items->GetSize()){
-        throw IndexOutOfRangeException(std::format("Ошибка индекса (индекс {} >= размер {})", index, items->GetSize()));
+    if(index >= items.GetSize()){
+        throw IndexOutOfRangeException(std::format("Ошибка индекса (индекс {} >= размер {})", index, items.GetSize()));
     }
-    return items->Get(index);
+    return items.Get(index);
 }
 
 template <typename T >
 size_t ArraySequence<T>::GetLength() const{
-    return items->GetSize();
+    return items.GetSize();
 }
 
 template <typename T >
 ArraySequence<T>* ArraySequence<T>::GetSubsequence(size_t startIndex, size_t endIndex) const{
-    if(endIndex < startIndex || startIndex >= items->GetSize() || endIndex >= items->GetSize()){
-        throw IndexOutOfRangeException(std::format("Ошибка индекса (start: {}, end: {}, size: {})", startIndex, endIndex, items->GetSize()));
+    if(endIndex < startIndex || startIndex >= items.GetSize() || endIndex >= items.GetSize()){
+        throw IndexOutOfRangeException(std::format("Ошибка индекса (start: {}, end: {}, size: {})", startIndex, endIndex, items.GetSize()));
     }
     size_t len = endIndex-startIndex+1;
     ArraySequence<T>* new_arr = new ArraySequence<T>;
 
     for(size_t i = 0; i < len; i++){
-        new_arr->Append(items->Get(startIndex + i));
+        new_arr->Append(items.Get(startIndex + i));
     }
     return new_arr;
 }
@@ -209,7 +201,7 @@ ArraySequence<T>* ArraySequence<T>::Concat(Sequence<T>* list){
 
 template <typename T >
 void ArraySequence<T>::SetInternal(size_t index, T item){
-    items->Set(index, item); 
+    items.Set(index, item); 
 }
 
 template <typename T >
@@ -221,9 +213,7 @@ ArraySequence<T>* ArraySequence<T>::Set(size_t index, T item){
 
 
 template <typename T>
-ArraySequence<T>::~ArraySequence(){
-    delete items;
-}
+ArraySequence<T>::~ArraySequence() {}
 
 template <typename T>
 class MutableArraySequence : public ArraySequence<T>{
@@ -254,34 +244,30 @@ public:
 };
 
 template <typename T>
-Sequence<T>* ArraySequence<T>::ReflectSum() const{
-    if constexpr (is_arithmetic_v<T>){
-        size_t len = this->GetLength();
-
-        if (len == 0){
-            throw EmptySequenceException("ReflectSum: список пуст");
-        }
-        
-        T* arr = new T[len];
-        for(size_t i = 0; i < len; ++i){
-            arr[i] = this->Get(i) + this->Get(len - 1 - i);
-        }  
-
-        Sequence<T>* result = new ArraySequence<T>(arr, len);
-        delete[] arr;
-        return result;
-    } 
-    else{
-        throw InvalidSizeException("доступна только для числовых типов");
-    }
+Sequence<T>* ArrayReflectSumImpl(const ArraySequence<T>* seq) requires std::is_arithmetic_v<T>{
+    size_t len = seq->GetLength();
+    ArraySequence<T>* result = new ArraySequence<T>();
+    for(size_t i = 0; i < len; ++i){
+        result->Append(seq->Get(i) + seq->Get(len - 1 - i));
+    }  
+    return result;
 }
 
+template <typename T>
+Sequence<T>* ArrayReflectSumImpl(const ArraySequence<T>* seq) requires (!std::is_arithmetic_v<T>){
+    return nullptr;
+}
+
+template <typename T>
+Sequence<T>* ArraySequence<T>::DoReflectSum() const{
+    return ArrayReflectSumImpl<T>(this);
+}
 
 template <typename T, typename T2>
 ArraySequence<T2>* Map(ArraySequence<T>* seq, T2 (*func)(T)){
     ArraySequence<T2>* result = new ArraySequence<T2>();
-    for(size_t i = 0; i < seq->GetLength(); i++){
-        result->Append(func(seq->Get(i)));
+    for(auto item : *seq){
+        result->Append(func(item));
     }
     return result;
 }
@@ -289,8 +275,8 @@ ArraySequence<T2>* Map(ArraySequence<T>* seq, T2 (*func)(T)){
 template <typename T, typename T2>
 T2 Reduce(ArraySequence<T>* seq, T2 (*func)(T2, T), T2 start_val){
     T2 result = start_val;
-    for(size_t i = 0; i < seq->GetLength(); i++){
-        result = func(result, seq->Get(i));
+    for(auto item : *seq){
+        result = func(result, item);
     }
     return result;
 }
@@ -298,8 +284,7 @@ T2 Reduce(ArraySequence<T>* seq, T2 (*func)(T2, T), T2 start_val){
 template <typename T>
 ArraySequence<T>* Where(ArraySequence<T>* seq, bool (*check_func)(T)){
     ArraySequence<T>* result = new ArraySequence<T>();
-    for(size_t i = 0; i < seq->GetLength(); i++){
-        T item = seq->Get(i);
+    for(auto item : *seq){
         if(check_func(item)){
             result->Append(item);
         }
