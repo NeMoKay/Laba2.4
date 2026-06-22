@@ -82,7 +82,7 @@ void ListSequence<T>::PrependInternal(T item){
 template <typename T >
 void ListSequence<T>::InsertAtInternal(T item, size_t index){
     if(index > items.GetLength()){
-        throw IndexOutOfRangeException(std::format("Индекс вне диапазона (индекс: {}, максимум: {})", index, items.GetLength()));
+        throw IndexOutOfRangeException(std::format("Индекс вне диапазона (индекс:  {}, максимум:  {})", index, items.GetLength()));
     }
     items.InsertAt(item, index);
 }
@@ -103,14 +103,14 @@ void ListSequence<T>::ConcatInternal(Sequence<T>* list){
 // public
 
 template <typename T >
-ListSequence<T>::ListSequence() : items() {}
+ListSequence<T>::ListSequence() : items()  {}
 
 template <typename T>
 template <size_t N>
-ListSequence<T>::ListSequence(T (&arr)[N]) : items(arr) {}
+ListSequence<T>::ListSequence(T (&arr)[N]) : items(arr)  {}
 
 template <typename T >
-ListSequence<T>::ListSequence(const ListSequence<T>& list) : items(list.items) {}
+ListSequence<T>::ListSequence(const ListSequence<T>& list) : items(list.items)  {}
 
 template <typename T >
 T ListSequence<T>::GetFirst() const{
@@ -132,7 +132,7 @@ ListSequence<T>* ListSequence<T>::GetSubsequence(size_t startIndex, size_t endIn
 
     if(endIndex < startIndex || startIndex >= items.GetLength() || endIndex >= items.GetLength()){
 
-        throw IndexOutOfRangeException(std::format("Ошибка индекса (start: {}, end: {}, size: {})", startIndex, endIndex, items.GetLength()));
+        throw IndexOutOfRangeException(std::format("Ошибка индекса (start:  {}, end:  {}, size:  {})", startIndex, endIndex, items.GetLength()));
     }
 
     LinkedList<T>* items_sub_list;
@@ -171,7 +171,7 @@ template <typename T>
 ListSequence<T>* ListSequence<T>::InsertAt(T item, size_t index){
 
     if(index > items.GetLength()){
-        throw IndexOutOfRangeException(std::format("Индекс вне диапазона (индекс: {}, максимум: {})", index, items.GetLength()));
+        throw IndexOutOfRangeException(std::format("Индекс вне диапазона (индекс:  {}, максимум:  {})", index, items.GetLength()));
     }
 
     ListSequence<T>* list = Instance();
@@ -197,7 +197,7 @@ Sequence<T>* ListSequence<T>::Concat(Sequence<T>* list_p){
 }
 
 template <typename T>
-ListSequence<T>::~ListSequence() {}
+ListSequence<T>::~ListSequence()  {}
 
 template <typename T>
 void ListSequence<T>::SetInternal(size_t index, T item){

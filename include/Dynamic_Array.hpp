@@ -51,10 +51,10 @@ public:
 
 //public
 template <typename T >
-DynamicArray<T>::DynamicArray() : data(nullptr), size(0) {}
+DynamicArray<T>::DynamicArray() : data(nullptr), size(0)  {}
 
 template <typename T >
-DynamicArray<T>::DynamicArray(size_t count) : data(new T[count]), size(count) {}
+DynamicArray<T>::DynamicArray(size_t count) : data(new T[count]), size(count)  {}
 
 template <typename T>
 template <size_t N>
@@ -126,7 +126,7 @@ DynamicArray<T>::~DynamicArray(){
 
 
 template <typename T>
-DynamicArray<T>::Iterator::Iterator(T* ptr) : ptr(ptr) {}
+DynamicArray<T>::Iterator::Iterator(T* ptr) : ptr(ptr)  {}
 
 template <typename T>
 T DynamicArray<T>::Iterator::operator*() const{ 

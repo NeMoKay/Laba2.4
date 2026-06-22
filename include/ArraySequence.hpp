@@ -84,7 +84,7 @@ void ArraySequence<T>::PrependInternal(T item){
 template <typename T >
 void ArraySequence<T>::InsertAtInternal(T item, size_t index){
     if(index > items.GetSize()){
-        throw IndexOutOfRangeException(std::format("Ошибка индекса (переданный инндекс {} > максимальный индекс последовательности {})",index,  items.GetSize() - 1));
+        throw IndexOutOfRangeException(std::format("Ошибка индекса (переданный инндекс  {} > максимальный индекс последовательности  {})",index,  items.GetSize() - 1));
     }
 
     if(index == 0){
@@ -117,13 +117,13 @@ void ArraySequence<T>::ConcatInternal(Sequence <T> *list){
 //public
 template <typename T>
 template <size_t N>
-ArraySequence<T>::ArraySequence(T (&arr)[N]) : items(arr) {}
+ArraySequence<T>::ArraySequence(T (&arr)[N]) : items(arr)  {}
 
 template <typename T >
-ArraySequence<T>::ArraySequence() : items() {}
+ArraySequence<T>::ArraySequence() : items()  {}
 
 template <typename T >
-ArraySequence<T>::ArraySequence(const ArraySequence<T>& operand) : items(operand.items) {}
+ArraySequence<T>::ArraySequence(const ArraySequence<T>& operand) : items(operand.items)  {}
 
 template <typename T >
 T ArraySequence<T>::GetFirst() const{
@@ -144,7 +144,7 @@ T ArraySequence<T>::GetLast() const{
 template <typename T >
 T ArraySequence<T>::Get(size_t index)const{
     if(index >= items.GetSize()){
-        throw IndexOutOfRangeException(std::format("Ошибка индекса (индекс {} >= размер {})", index, items.GetSize()));
+        throw IndexOutOfRangeException(std::format("Ошибка индекса (индекс  {} >= размер  {})", index, items.GetSize()));
     }
     return items.Get(index);
 }
@@ -157,7 +157,7 @@ size_t ArraySequence<T>::GetLength() const{
 template <typename T >
 ArraySequence<T>* ArraySequence<T>::GetSubsequence(size_t startIndex, size_t endIndex) const{
     if(endIndex < startIndex || startIndex >= items.GetSize() || endIndex >= items.GetSize()){
-        throw IndexOutOfRangeException(std::format("Ошибка индекса (start: {}, end: {}, size: {})", startIndex, endIndex, items.GetSize()));
+        throw IndexOutOfRangeException(std::format("Ошибка индекса (start:  {}, end:  {}, size:  {})", startIndex, endIndex, items.GetSize()));
     }
     size_t len = endIndex-startIndex+1;
     ArraySequence<T>* new_arr = new ArraySequence<T>;
@@ -213,7 +213,7 @@ ArraySequence<T>* ArraySequence<T>::Set(size_t index, T item){
 
 
 template <typename T>
-ArraySequence<T>::~ArraySequence() {}
+ArraySequence<T>::~ArraySequence()  {}
 
 template <typename T>
 class MutableArraySequence : public ArraySequence<T>{

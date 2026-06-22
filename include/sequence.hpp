@@ -62,7 +62,7 @@ SequenceStats<T> Sequence<T>::get_stats() const requires is_arithmetic_v<T>{
         throw EmptySequenceException("Список пуст");
     }
 
-    SequenceStats<T> Stats {};
+    SequenceStats<T> Stats  {};
     Stats.max = this->Get(0);
     Stats.min = this->Get(0);
     Stats.avg = 0.0;

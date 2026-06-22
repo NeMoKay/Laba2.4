@@ -29,32 +29,32 @@ public:
 
 class IndexOutOfRangeException : public Exception{
 public:
-    IndexOutOfRangeException(const char* message) : Exception(message) {}
-    IndexOutOfRangeException(const std::string& message) : Exception(message) {}
+    IndexOutOfRangeException(const char* message) : Exception(message)  {}
+    IndexOutOfRangeException(const std::string& message) : Exception(message)  {}
 };
 
 class EmptySequenceException : public Exception{
 public:
-    EmptySequenceException(const char* message) : Exception(message) {}
-    EmptySequenceException(const std::string& message) : Exception(message) {}
+    EmptySequenceException(const char* message) : Exception(message)  {}
+    EmptySequenceException(const std::string& message) : Exception(message)  {}
 };
 
 class InvalidSizeException : public Exception{
 public:
-    InvalidSizeException(const char* message) : Exception(message) {}
-    InvalidSizeException(const std::string& message) : Exception(message) {}
+    InvalidSizeException(const char* message) : Exception(message)  {}
+    InvalidSizeException(const std::string& message) : Exception(message)  {}
 };
 
 class NullPtrException : public Exception{
 public:
-    NullPtrException(const char* message) : Exception(message) {}
-    NullPtrException(const std::string& message) : Exception(message) {}
+    NullPtrException(const char* message) : Exception(message)  {}
+    NullPtrException(const std::string& message) : Exception(message)  {}
 };
 
 class LengthMismatchException : public Exception{
 public:
-    LengthMismatchException(const char* message) : Exception(message) {}
-    LengthMismatchException(const std::string& message) : Exception(message) {}
+    LengthMismatchException(const char* message) : Exception(message)  {}
+    LengthMismatchException(const std::string& message) : Exception(message)  {}
 };
 
 

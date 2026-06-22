@@ -1,336 +1,259 @@
 #pragma once
 
-#include <iostream>
-#include <cstddef>
-#include <string>
-#include <format>
+#include <functional>
+#include "sequence.hpp"
+#include "ArraySequence.hpp"
 #include "exceptions.hpp"
 
-template <typename T > 
-class LinkedList{
+class Cardinal{
 private:
-    struct Node{
-        T value;
-        Node *next;
-        Node *prev;
+    bool isInfinite;
+    size_t value;
 
-        Node(T new_value, Node *new_next, Node *new_prev);
-        Node();
-        Node(T val);
-    };
-    
-    Node *head;
-    Node *tail;
-    
+    Cardinal(bool isInfinite, size_t val);
+
 public:
-    template <size_t N>
-    LinkedList(T (&arr)[N]);
-    
-    LinkedList();
-    LinkedList(const LinkedList<T>& list);
+    Cardinal(size_t val);
+    static Cardinal Infinite();
 
-    T GetFirst() const;
-    T GetLast() const;
-    T Get(size_t index) const;
-    LinkedList<T>* GetSubList(size_t startIndex, size_t endIndex) const;
-    size_t GetLength() const;
-
-    void Append(T item);
-    void Prepend(T item);
-    void InsertAt(T item, size_t index);
-    void Set(size_t index, T item);
-    LinkedList<T>* Concat(LinkedList<T> *list);
-
-    ~LinkedList();
-
-    class Iterator{
-    private:
-        Node* current;
-    public:
-        Iterator(Node* node);
-        T operator*() const;
-        Iterator& operator++();
-        bool operator!=(const Iterator& other) const;
-    };
-
-    Iterator begin() const;
-    Iterator end() const;
+    bool IsInfinite() const;
+    size_t GetValue() const;
 };
 
-//private Node
-template <typename T >
-LinkedList<T>::Node::Node(T new_value, Node *new_next, Node *new_prev){
-    value = new_value;
-    next = new_next;
-    prev = new_prev;
-}
-
-template <typename T >
-LinkedList<T>::Node::Node(){
-    next = nullptr;
-    prev = nullptr;
-}
-
-template <typename T >
-LinkedList<T>::Node::Node(T val){
-    next = nullptr;
-    prev = nullptr;
-    value = val;
-}
-
-//public
 template <typename T>
-template <size_t N>
-LinkedList<T>::LinkedList(T (&arr)[N]){
-    if(N == 0){
-        throw InvalidSizeException("Размер <= 0 ");
+class LazySequence{
+private:
+    ArraySequence<T> cache;
+    std::function<T(Sequence<T>*)> generator;
+    bool isInfinite;
+
+    void MaterializeUpTo(size_t index);
+
+public:
+    LazySequence();
+    LazySequence(T* items, size_t count);
+    LazySequence(Sequence<T>* sequence);
+    LazySequence(const LazySequence<T>& other);
+    LazySequence(std::function<T(Sequence<T>*)> gen, Sequence<T>* initialItems);
+
+    T operator[](size_t index);
+    T Get(size_t index);
+    T GetFirst();
+    T GetLast();
+    LazySequence<T>* GetSubsequence(size_t startIndex, size_t endIndex);
+    
+    size_t GetMaterializedCount() const;
+    Cardinal GetLength() const;
+
+    LazySequence<T>* Append(T item);
+    LazySequence<T>* Prepend(T item);
+    LazySequence<T>* InsertAt(T item, size_t index);
+    LazySequence<T>* Concat(LazySequence<T>* other);
+
+    template <typename U>
+    LazySequence<U>* Map(U (*func)(T), size_t count);
+
+    LazySequence<T>* Where(bool (*pred)(T), size_t count);
+
+    template <typename U>
+    U Reduce(U (*func)(U, T), U initial, size_t count);
+};
+
+inline Cardinal::Cardinal(bool isInfinite, size_t val) : isInfinite(isInfinite), value(val)  {}
+
+inline Cardinal::Cardinal(size_t val) : Cardinal(false, val)  {}
+
+inline Cardinal Cardinal::Infinite(){ 
+    return Cardinal(true, 0); 
+}
+
+inline bool Cardinal::IsInfinite() const{ 
+    return isInfinite; 
+}
+
+inline size_t Cardinal::GetValue() const{ 
+    return value; 
+}
+
+template <typename T>
+void LazySequence<T>::MaterializeUpTo(size_t index){
+    if(index < cache.GetLength()){ return; }
+
+    if(!isInfinite){
+        throw IndexOutOfRangeException("Индекс вне диапазона");
     }
 
-    head = nullptr;
-    tail = nullptr;
-    Node *prev_elem = nullptr;
-    Node *now_elem = nullptr;
-
-    for(size_t i = 0; i < N; i++){
-        now_elem = new Node;
-
-        now_elem->value = arr[i];
-        now_elem->prev = prev_elem;
-        if(i != 0){
-            prev_elem->next = now_elem;
-        }
-
-        prev_elem = now_elem;
-        if(i == 0){
-            head = now_elem;
-        }
-        if(i == N - 1){
-            tail = now_elem;
-        }
+    while(cache.GetLength() <= index){
+        cache.Append(generator(&cache));
     }
 }
 
-template <typename T >
-LinkedList<T>::LinkedList() : head(nullptr), tail(nullptr) {}
+template <typename T>
+LazySequence<T>::LazySequence() : isInfinite(false)  {}
 
-template <typename T >
-LinkedList<T>::LinkedList(const LinkedList<T>& list) : head(nullptr), tail(nullptr){
-    Node* now_elem = list.head;
-
-    while(now_elem != nullptr){
-        Append(now_elem->value);
-        now_elem = now_elem->next;
+template <typename T>
+LazySequence<T>::LazySequence(T* items, size_t count) : isInfinite(false){
+    if(items == nullptr){
+        throw NullPtrException("Null указатель");
+    }
+    for(size_t i = 0; i < count; i++){ 
+        cache.Append(items[i]); 
     }
 }
 
-template <typename T >
-T LinkedList<T>::GetFirst() const{
-    if(head == nullptr){
-        throw EmptySequenceException("Список пуст");
+template <typename T>
+LazySequence<T>::LazySequence(Sequence<T>* sequence) : isInfinite(false){
+    if(sequence == nullptr){
+        throw NullPtrException("Null указатель");
     }
-    return head->value;
-}
-
-template <typename T >
-T LinkedList<T>::GetLast() const{
-    if(tail == nullptr){
-        throw EmptySequenceException("Список пуст");
-    }
-    return tail->value;
-}
-
-template <typename T >
-T LinkedList<T>::Get(size_t index) const{
-    size_t length = GetLength();
-    if(index >= length){
-        throw IndexOutOfRangeException(std::format("Индекс вне списка (индекс: {}, размер: {})", index, length));
-    }
-
-    if(index < length / 2){
-        Node *now_elem = head;
-        for(size_t i = 0; i < index; i++){
-            now_elem = now_elem->next;
-        }
-        return now_elem->value;
-    }
-    else{
-        Node *now_elem = tail;
-        for(size_t i = 0; i < length - index - 1; i++){
-            now_elem = now_elem->prev;
-        }
-        return now_elem->value;
+    for(size_t i = 0; i < sequence->GetLength(); i++){
+        cache.Append(sequence->Get(i));
     }
 }
 
-template <typename T >
-void LinkedList<T>::Set(size_t index, T item){
-    size_t length = GetLength();
-    if(index >= length){
-        throw IndexOutOfRangeException(std::format("Индекс вне списка (индекс: {}, размер: {})", index, length));
-    }
+template <typename T>
+LazySequence<T>::LazySequence(const LazySequence<T>& other)
+    : cache(other.cache), generator(other.generator), isInfinite(other.isInfinite)  {}
 
-    if(index < length / 2){
-        Node *now_elem = head;
-        for(size_t i = 0; i < index; i++){
-            now_elem = now_elem->next;
-        }
-        now_elem->value = item;
+template <typename T>
+LazySequence<T>::LazySequence(std::function<T(Sequence<T>*)> gen, Sequence<T>* initialItems)
+    : generator(gen), isInfinite(true){
+    if(initialItems == nullptr){
+        throw NullPtrException("Null указатель");
     }
-    else{
-        Node *now_elem = tail;
-        for(size_t i = 0; i < length - index - 1; i++){
-            now_elem = now_elem->prev;
-        }
-        now_elem->value = item;
+    if(initialItems->GetLength() == 0){
+        throw InvalidSizeException("Для генератора нужен хотя бы 1 элемент");
+    }
+    for(size_t i = 0; i < initialItems->GetLength(); i++){ 
+        cache.Append(initialItems->Get(i)); 
     }
 }
 
-template <typename T >
-LinkedList<T>* LinkedList<T>::GetSubList(size_t startIndex, size_t endIndex) const{
-    size_t length = GetLength();
-    if(endIndex < startIndex || startIndex >= length || endIndex >= length){
-        throw IndexOutOfRangeException(std::format("Ошибка индекса (start: {}, end: {}, size: {})", startIndex, endIndex, length));
+template <typename T>
+T LazySequence<T>::operator[](size_t index){
+    if(index >= cache.GetLength()){ MaterializeUpTo(index); }
+    return cache[index];
+}
+
+template <typename T>
+T LazySequence<T>::Get(size_t index){
+    if(index >= cache.GetLength()){ MaterializeUpTo(index); }
+    return (*this)[index];
+}
+
+template <typename T>
+T LazySequence<T>::GetFirst(){
+    if(cache.GetLength() == 0){ throw EmptySequenceException("Пустой список"); }
+    return (*this)[0];
+}
+
+template <typename T>
+T LazySequence<T>::GetLast(){
+    if(isInfinite){
+        throw Exception("Невозможно получить последний элемент бесконечной последовательности");
     }
+    if(cache.GetLength() == 0){ throw EmptySequenceException("Пустой список"); }
+    return (*this)[cache.GetLength() - 1];
+}
 
-    LinkedList<T>* result = new LinkedList<T>();
-
-    Node *now_elem = head;
-    size_t current_pos = 0;
-    while(now_elem != nullptr){
-        if(current_pos >= startIndex && current_pos <= endIndex){
-            result->Append(now_elem->value);
-        }
-        now_elem = now_elem->next;
-        current_pos++;
+template <typename T>
+LazySequence<T>* LazySequence<T>::GetSubsequence(size_t startIndex, size_t endIndex){
+    if(startIndex > endIndex){
+        throw IndexOutOfRangeException("Начальный индекс больше конечного");
     }
-
+    if(!isInfinite && endIndex >= cache.GetLength()){
+        throw IndexOutOfRangeException("Конечный индекс вне диапазона");
+    }
+    Get(endIndex);
+    LazySequence<T>* result = new LazySequence<T>();
+    for(size_t i = startIndex; i <= endIndex; i++){
+        result->cache.Append(this->cache.Get(i));
+    }
     return result;
 }
 
-template <typename T >
-size_t LinkedList<T>::GetLength() const{
-    size_t count = 0;
-    Node *now_elem = head;
-    while(now_elem != nullptr){
-        count++;
-        now_elem = now_elem->next;
-    }
-    return count;
-}
-
-template <typename T >
-void LinkedList<T>::Append(T item){
-    Node *new_elem = new Node;
-    new_elem->value = item;
-    
-    if(head != nullptr){
-        new_elem->prev = tail;
-        tail->next = new_elem;
-        tail = new_elem;
-    }
-    else{
-        head = new_elem;
-        tail = new_elem;
-    }
-}
-
-template <typename T >
-void LinkedList<T>::Prepend(T item){
-    Node *new_elem = new Node;
-    new_elem->value = item;
-
-    if(head != nullptr){
-        new_elem->next = head;
-        head->prev = new_elem;
-        head = new_elem;
-    }
-    else{
-        head = new_elem;
-        tail = new_elem;
-    }
-}
-
-template <typename T >
-void LinkedList<T>::InsertAt(T item, size_t index){
-    size_t length = GetLength();
-    if(index > length){
-        throw IndexOutOfRangeException(std::format("Индекс вне диапазона (индекс: {}, максимум: {})", index, length));
-    }
-
-    if(index == 0){
-        this->Prepend(item);
-        return;
-    }
-    if(index == length){
-        this->Append(item);
-        return;
-    }
-
-    Node *now_elem = head;
-    for(size_t i = 0; i < index; i++){
-        now_elem = now_elem->next;
-    }
-
-    Node *new_elem = new Node;
-    new_elem->value = item;
-    new_elem->prev = now_elem->prev;
-    new_elem->next = now_elem;
-    (now_elem->prev)->next = new_elem;
-    now_elem->prev = new_elem;
+template <typename T>
+size_t LazySequence<T>::GetMaterializedCount() const{ 
+    return cache.GetLength(); 
 }
 
 template <typename T>
-LinkedList<T>* LinkedList<T>::Concat(LinkedList<T> *list){
-    if(list == nullptr){
-        return this;
+Cardinal LazySequence<T>::GetLength() const{
+    if(isInfinite){ return Cardinal::Infinite(); }
+    return Cardinal(cache.GetLength());
+}
+
+template <typename T>
+LazySequence<T>* LazySequence<T>::Append(T item){
+    if(isInfinite){
+        throw Exception("Невозможно добавить элемент в бесконечную последовательность");
     }
-    
-    size_t other_length = list->GetLength();
-    for(size_t i = 0; i < other_length; i++){
-        this->Append(list->Get(i));
+    cache.Append(item);
+    return this;
+}
+
+template <typename T>
+LazySequence<T>* LazySequence<T>::Prepend(T item){
+    cache.Prepend(item);
+    return this;
+}
+
+template <typename T>
+LazySequence<T>* LazySequence<T>::InsertAt(T item, size_t index){
+    if(index > cache.GetLength()){
+        throw IndexOutOfRangeException("Индекс вне диапазона");
+    }
+    cache.InsertAt(item, index);
+    return this;
+}
+
+template <typename T>
+LazySequence<T>* LazySequence<T>::Concat(LazySequence<T>* other){
+    if(other == nullptr){ throw NullPtrException("Null указатель"); }
+    if(isInfinite){
+        throw Exception("Невозможно выполнить конкатенацию бесконечной последовательности");
+    }
+    for(size_t i = 0; i < other->cache.GetLength(); i++){
+        cache.Append(other->cache.Get(i));
     }
     return this;
 }
 
-template <typename T >
-LinkedList<T>::~LinkedList(){
-    Node *now_elem = head;
-    while(now_elem != nullptr){
-        Node *next_elem = now_elem->next;
-        delete now_elem;
-        now_elem = next_elem;
+template <typename T>
+template <typename U>
+LazySequence<U>* LazySequence<T>::Map(U (*func)(T), size_t count){
+    if(func == nullptr){
+        throw NullPtrException("Null указатель на функцию");
     }
-    head = nullptr;
-    tail = nullptr;
-}
-
-template <typename T>
-LinkedList<T>::Iterator::Iterator(Node* node) : current(node) {}
-
-template <typename T>
-T LinkedList<T>::Iterator::operator*() const{ 
-    return current->value; 
-}
-
-template <typename T>
-typename LinkedList<T>::Iterator& LinkedList<T>::Iterator::operator++(){ 
-    if (current != nullptr){
-        current = current->next;
+    LazySequence<U>* result = new LazySequence<U>();
+    for(size_t i = 0; i < count; i++){
+        result->Append(func(this->Get(i)));
     }
-    return *this; 
+    return result;
 }
 
 template <typename T>
-bool LinkedList<T>::Iterator::operator!=(const Iterator& other) const{ 
-    return current != other.current; 
+LazySequence<T>* LazySequence<T>::Where(bool (*pred)(T), size_t count){
+    if(pred == nullptr){
+        throw NullPtrException("Null указатель на функцию");
+    }
+    LazySequence<T>* result = new LazySequence<T>();
+    for(size_t i = 0; i < count; i++){
+        T item = this->Get(i);
+        if(pred(item)){ result->cache.Append(item); }
+    }
+    return result;
 }
 
 template <typename T>
-typename LinkedList<T>::Iterator LinkedList<T>::begin() const{ 
-    return Iterator(head); 
-}
-
-template <typename T>
-typename LinkedList<T>::Iterator LinkedList<T>::end() const{ 
-    return Iterator(nullptr); 
+template <typename U>
+U LazySequence<T>::Reduce(U (*func)(U, T), U initial, size_t count){
+    if(func == nullptr){
+        throw NullPtrException("Null указатель на функцию");
+    }
+    U result = initial;
+    for(size_t i = 0; i < count; i++){
+        result = func(result, this->Get(i));
+    }
+    return result;
 }

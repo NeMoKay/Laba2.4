@@ -111,7 +111,7 @@ LinkedList<T>::LinkedList(T (&arr)[N]){
 }
 
 template <typename T >
-LinkedList<T>::LinkedList() : head(nullptr), tail(nullptr) {}
+LinkedList<T>::LinkedList() : head(nullptr), tail(nullptr)  {}
 
 template <typename T >
 LinkedList<T>::LinkedList(const LinkedList<T>& list) : head(nullptr), tail(nullptr){
@@ -143,7 +143,7 @@ template <typename T >
 T LinkedList<T>::Get(size_t index) const{
     size_t length = GetLength();
     if(index >= length){
-        throw IndexOutOfRangeException(std::format("Индекс вне списка (индекс: {}, размер: {})", index, length));
+        throw IndexOutOfRangeException(std::format("Индекс вне списка (индекс:  {}, размер:  {})", index, length));
     }
 
     if(index < length / 2){
@@ -166,7 +166,7 @@ template <typename T >
 void LinkedList<T>::Set(size_t index, T item){
     size_t length = GetLength();
     if(index >= length){
-        throw IndexOutOfRangeException(std::format("Индекс вне списка (индекс: {}, размер: {})", index, length));
+        throw IndexOutOfRangeException(std::format("Индекс вне списка (индекс:  {}, размер:  {})", index, length));
     }
 
     if(index < length / 2){
@@ -189,7 +189,7 @@ template <typename T >
 LinkedList<T>* LinkedList<T>::GetSubList(size_t startIndex, size_t endIndex) const{
     size_t length = GetLength();
     if(endIndex < startIndex || startIndex >= length || endIndex >= length){
-        throw IndexOutOfRangeException(std::format("Ошибка индекса (start: {}, end: {}, size: {})", startIndex, endIndex, length));
+        throw IndexOutOfRangeException(std::format("Ошибка индекса (start:  {}, end:  {}, size:  {})", startIndex, endIndex, length));
     }
 
     LinkedList<T>* result = new LinkedList<T>();
@@ -254,7 +254,7 @@ template <typename T >
 void LinkedList<T>::InsertAt(T item, size_t index){
     size_t length = GetLength();
     if(index > length){
-        throw IndexOutOfRangeException(std::format("Индекс вне диапазона (индекс: {}, максимум: {})", index, length));
+        throw IndexOutOfRangeException(std::format("Индекс вне диапазона (индекс:  {}, максимум:  {})", index, length));
     }
 
     if(index == 0){
@@ -305,7 +305,7 @@ LinkedList<T>::~LinkedList(){
 }
 
 template <typename T>
-LinkedList<T>::Iterator::Iterator(Node* node) : current(node) {}
+LinkedList<T>::Iterator::Iterator(Node* node) : current(node)  {}
 
 template <typename T>
 T LinkedList<T>::Iterator::operator*() const{ 

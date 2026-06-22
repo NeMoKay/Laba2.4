@@ -1,43 +1,40 @@
 #pragma once
 #include <cstddef>
+#include <functional>
 
 template <typename T1, typename T2>
 struct Pair{
     T1 elem1;
     T2 elem2;
-    Pair(const T1 &new_elem1, const T2 &new_elem2) : elem1(new_elem1), elem2(new_elem2) {}
-    Pair() : elem1(T1()), elem2(T2()) {};
+    Pair(const T1 &new_elem1, const T2 &new_elem2) : elem1(new_elem1), elem2(new_elem2)  {}
+    Pair() : elem1(T1()), elem2(T2())  {};
     bool operator==(const Pair<T1, T2>& other) const{
         return (elem1 == other.elem1) && (elem2 == other.elem2);
     }
 };
-
-
 
 template <typename K, typename V>
 struct bucket{
     Pair<K, V> data;
     bool is_empty;
     int next_idx;
-    bucket() : is_empty(true), next_idx(-1) {}
-    bucket(Pair<K, V> val) : data(val), is_empty(false), next_idx(-1) {}
+    bucket() : is_empty(true), next_idx(-1)  {}
+    bucket(Pair<K, V> val) : data(val), is_empty(false), next_idx(-1)  {}
 };
-
 
 template <typename K, typename V, template <typename> class Container>
 class Dict{
 private:
     const int size_table = 100;
     Container<bucket<K, V>> table;
-    template <typename T1, typename T2>
-    size_t HashFunc(const Pair<T1, T2>& key) const;
+
+    size_t HashFunc(const K& key) const;
 
 public:
     Dict();
     V Get(const K& key) const;
     void Set(const K& key, const V& value);
     Container<Pair<K, V>> Get_Items() const;
-
 
     class Iterator{
     private:
@@ -56,11 +53,10 @@ public:
     Iterator end() const;
 };
 
-
 template <typename K, typename V, template <typename> class Container>
-template <typename T1, typename T2>
-size_t Dict<K, V, Container>::HashFunc(const Pair<T1, T2>& key) const{
-    return (key.elem1 * 31 + key.elem2) % size_table;
+size_t Dict<K, V, Container>::HashFunc(const K& key) const{
+    std::hash<K> hasher;
+    return hasher(key) % size_table;
 }
 
 template <typename K, typename V, template <typename> class Container>
@@ -125,10 +121,6 @@ Container<Pair<K, V>> Dict<K, V, Container>::Get_Items() const{
     }
     return items;
 }
-
-
-
-
 
 template <typename K, typename V, template <typename> class Container>
 void Dict<K, V, Container>::Iterator::SkipZeroVal(){
