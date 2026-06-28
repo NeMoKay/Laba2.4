@@ -1,13 +1,29 @@
 #pragma once
+
 #include <cstddef>
-#include <functional>
+#include <string>
+
+template <typename K>
+size_t CustomHash(const K& key){
+    return static_cast<size_t>(key);
+}
+
+template <>
+inline size_t CustomHash<std::string>(const std::string& key){
+    size_t hash = 0;
+    for(char c : key){
+        hash = hash * 31 + c;
+    }
+    return hash;
+}
 
 template <typename T1, typename T2>
 struct Pair{
     T1 elem1;
     T2 elem2;
-    Pair(const T1 &new_elem1, const T2 &new_elem2) : elem1(new_elem1), elem2(new_elem2)  {}
-    Pair() : elem1(T1()), elem2(T2())  {};
+    Pair(const T1 &new_elem1, const T2 &new_elem2) : elem1(new_elem1), elem2(new_elem2) {}
+    Pair() : elem1(T1()), elem2(T2()) {};
+    
     bool operator==(const Pair<T1, T2>& other) const{
         return (elem1 == other.elem1) && (elem2 == other.elem2);
     }
@@ -18,8 +34,8 @@ struct bucket{
     Pair<K, V> data;
     bool is_empty;
     int next_idx;
-    bucket() : is_empty(true), next_idx(-1)  {}
-    bucket(Pair<K, V> val) : data(val), is_empty(false), next_idx(-1)  {}
+    bucket() : is_empty(true), next_idx(-1) {}
+    bucket(Pair<K, V> val) : data(val), is_empty(false), next_idx(-1) {}
 };
 
 template <typename K, typename V, template <typename> class Container>
@@ -32,6 +48,7 @@ private:
 
 public:
     Dict();
+    
     V Get(const K& key) const;
     void Set(const K& key, const V& value);
     Container<Pair<K, V>> Get_Items() const;
@@ -53,15 +70,15 @@ public:
     Iterator end() const;
 };
 
+
 template <typename K, typename V, template <typename> class Container>
 size_t Dict<K, V, Container>::HashFunc(const K& key) const{
-    std::hash<K> hasher;
-    return hasher(key) % size_table;
+    return CustomHash(key) % size_table;
 }
 
 template <typename K, typename V, template <typename> class Container>
 Dict<K, V, Container>::Dict(){
-    for (int i = 0; i < size_table; i++){
+    for(int i = 0; i < size_table; i++){
         table.Append(bucket<K, V>());
     }
 }
@@ -70,9 +87,10 @@ template <typename K, typename V, template <typename> class Container>
 V Dict<K, V, Container>::Get(const K& key) const{
     size_t hash = HashFunc(key);
     int index = hash;
-    while (index != -1){
+    
+    while(index != -1){
         bucket<K, V> now_elem = table.Get(index);
-        if (!now_elem.is_empty && now_elem.data.elem1 == key){
+        if(!now_elem.is_empty && now_elem.data.elem1 == key){
             return now_elem.data.elem2;
         }
         index = now_elem.next_idx;
@@ -85,7 +103,7 @@ void Dict<K, V, Container>::Set(const K& key, const V& value){
     size_t hash = HashFunc(key);
     bucket<K, V> now_elem = table.Get(hash);
 
-    if (now_elem.is_empty){
+    if(now_elem.is_empty){
         now_elem.data = Pair<K, V>(key, value);
         now_elem.is_empty = false;
         table.Set(hash, now_elem);
@@ -94,9 +112,10 @@ void Dict<K, V, Container>::Set(const K& key, const V& value){
 
     int index = hash;
     int last_idx = hash;
-    while (index != -1){
+    
+    while(index != -1){
         now_elem = table.Get(index);
-        if (!now_elem.is_empty && now_elem.data.elem1 == key){
+        if(!now_elem.is_empty && now_elem.data.elem1 == key){
             now_elem.data.elem2 = value;
             table.Set(index, now_elem);
             return;
@@ -114,18 +133,19 @@ void Dict<K, V, Container>::Set(const K& key, const V& value){
 template <typename K, typename V, template <typename> class Container>
 Container<Pair<K, V>> Dict<K, V, Container>::Get_Items() const{
     Container<Pair<K, V>> items;
-    for (auto now_elem : table){
-        if (!now_elem.is_empty){
+    for(auto now_elem : table){
+        if(!now_elem.is_empty){
             items.Append(now_elem.data);
         }
     }
     return items;
 }
 
+
 template <typename K, typename V, template <typename> class Container>
 void Dict<K, V, Container>::Iterator::SkipZeroVal(){
-    while (index < dict->table.GetLength()){
-        if (!dict->table.Get(index).is_empty){
+    while(index < dict->table.GetLength()){
+        if(!dict->table.Get(index).is_empty){
             break;
         }
         index++;
@@ -133,7 +153,8 @@ void Dict<K, V, Container>::Iterator::SkipZeroVal(){
 }
 
 template <typename K, typename V, template <typename> class Container>
-Dict<K, V, Container>::Iterator::Iterator(const Dict<K, V, Container>* dict, size_t index) : dict(dict), index(index){
+Dict<K, V, Container>::Iterator::Iterator(const Dict<K, V, Container>* dict, size_t index) 
+: dict(dict), index(index){
     SkipZeroVal();
 }
 

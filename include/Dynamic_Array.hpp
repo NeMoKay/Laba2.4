@@ -31,6 +31,7 @@ public:
     void Resize(size_t newSize);
     size_t GetSize() const;
     T operator[](size_t index) const;
+    DynamicArray<T>& operator=(const DynamicArray<T>& other);
 
     ~DynamicArray();
 
@@ -152,4 +153,22 @@ typename DynamicArray<T>::Iterator DynamicArray<T>::begin() const{
 template <typename T>
 typename DynamicArray<T>::Iterator DynamicArray<T>::end() const{ 
     return Iterator(data + size); 
+}
+
+template <typename T>
+DynamicArray<T>& DynamicArray<T>::operator=(const DynamicArray<T>& other){
+    if (this != &other){
+        delete[] data;
+        size = other.size;
+        if (size > 0) {
+            data = new T[size];
+            for(size_t i = 0; i < size; i++){
+                data[i] = other.data[i];
+            }
+        } 
+        else{
+            data = nullptr;
+        }
+    }
+    return *this;
 }

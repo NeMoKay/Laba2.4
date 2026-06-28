@@ -40,6 +40,7 @@ public:
     void InsertAt(T item, size_t index);
     void Set(size_t index, T item);
     LinkedList<T>* Concat(LinkedList<T> *list);
+    LinkedList<T>& operator=(const LinkedList<T>& other);
 
     ~LinkedList();
 
@@ -333,4 +334,25 @@ typename LinkedList<T>::Iterator LinkedList<T>::begin() const{
 template <typename T>
 typename LinkedList<T>::Iterator LinkedList<T>::end() const{ 
     return Iterator(nullptr); 
+}
+
+template <typename T>
+LinkedList<T>& LinkedList<T>::operator=(const LinkedList<T>& other){
+    if (this != &other){
+        Node *now_elem = head;
+        while(now_elem != nullptr){
+            Node *next_elem = now_elem->next;
+            delete now_elem;
+            now_elem = next_elem;
+        }
+        head = nullptr;
+        tail = nullptr;
+
+        Node* other_elem = other.head;
+        while(other_elem != nullptr){
+            Append(other_elem->value);
+            other_elem = other_elem->next;
+        }
+    }
+    return *this;
 }

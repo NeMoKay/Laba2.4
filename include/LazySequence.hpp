@@ -10,11 +10,9 @@ private:
     bool isInfinite;
     size_t value;
 
-    Cardinal(bool isInfinite, size_t val);
-
 public:
+    Cardinal();
     Cardinal(size_t val);
-    static Cardinal Infinite();
 
     bool IsInfinite() const;
     size_t GetValue() const;
@@ -59,13 +57,9 @@ public:
     U Reduce(U (*func)(U, T), U initial, size_t count);
 };
 
-inline Cardinal::Cardinal(bool isInfinite, size_t val) : isInfinite(isInfinite), value(val)  {}
+inline Cardinal::Cardinal() : isInfinite(true), value(0) {}
 
-inline Cardinal::Cardinal(size_t val) : Cardinal(false, val)  {}
-
-inline Cardinal Cardinal::Infinite(){ 
-    return Cardinal(true, 0); 
-}
+inline Cardinal::Cardinal(size_t val) : isInfinite(false), value(val) {}
 
 inline bool Cardinal::IsInfinite() const{ 
     return isInfinite; 
@@ -77,7 +71,9 @@ inline size_t Cardinal::GetValue() const{
 
 template <typename T>
 void LazySequence<T>::MaterializeUpTo(size_t index){
-    if(index < cache.GetLength()){ return; }
+    if(index < cache.GetLength()){ 
+        return; 
+    }
 
     if(!isInfinite){
         throw IndexOutOfRangeException("Индекс вне диапазона");
@@ -89,7 +85,7 @@ void LazySequence<T>::MaterializeUpTo(size_t index){
 }
 
 template <typename T>
-LazySequence<T>::LazySequence() : isInfinite(false)  {}
+LazySequence<T>::LazySequence() : isInfinite(false) {}
 
 template <typename T>
 LazySequence<T>::LazySequence(T* items, size_t count) : isInfinite(false){
@@ -113,7 +109,7 @@ LazySequence<T>::LazySequence(Sequence<T>* sequence) : isInfinite(false){
 
 template <typename T>
 LazySequence<T>::LazySequence(const LazySequence<T>& other)
-    : cache(other.cache), generator(other.generator), isInfinite(other.isInfinite)  {}
+    : cache(other.cache), generator(other.generator), isInfinite(other.isInfinite) {}
 
 template <typename T>
 LazySequence<T>::LazySequence(std::function<T(Sequence<T>*)> gen, Sequence<T>* initialItems)
@@ -131,19 +127,25 @@ LazySequence<T>::LazySequence(std::function<T(Sequence<T>*)> gen, Sequence<T>* i
 
 template <typename T>
 T LazySequence<T>::operator[](size_t index){
-    if(index >= cache.GetLength()){ MaterializeUpTo(index); }
+    if(index >= cache.GetLength()){ 
+        MaterializeUpTo(index); 
+    }
     return cache[index];
 }
 
 template <typename T>
 T LazySequence<T>::Get(size_t index){
-    if(index >= cache.GetLength()){ MaterializeUpTo(index); }
+    if(index >= cache.GetLength()){ 
+        MaterializeUpTo(index); 
+    }
     return (*this)[index];
 }
 
 template <typename T>
 T LazySequence<T>::GetFirst(){
-    if(cache.GetLength() == 0){ throw EmptySequenceException("Пустой список"); }
+    if(cache.GetLength() == 0){ 
+        throw EmptySequenceException("Пустой список"); 
+    }
     return (*this)[0];
 }
 
@@ -152,7 +154,9 @@ T LazySequence<T>::GetLast(){
     if(isInfinite){
         throw Exception("Невозможно получить последний элемент бесконечной последовательности");
     }
-    if(cache.GetLength() == 0){ throw EmptySequenceException("Пустой список"); }
+    if(cache.GetLength() == 0){ 
+        throw EmptySequenceException("Пустой список"); 
+    }
     return (*this)[cache.GetLength() - 1];
 }
 
@@ -179,7 +183,9 @@ size_t LazySequence<T>::GetMaterializedCount() const{
 
 template <typename T>
 Cardinal LazySequence<T>::GetLength() const{
-    if(isInfinite){ return Cardinal::Infinite(); }
+    if(isInfinite){ 
+        return Cardinal(); 
+    }
     return Cardinal(cache.GetLength());
 }
 
@@ -209,7 +215,9 @@ LazySequence<T>* LazySequence<T>::InsertAt(T item, size_t index){
 
 template <typename T>
 LazySequence<T>* LazySequence<T>::Concat(LazySequence<T>* other){
-    if(other == nullptr){ throw NullPtrException("Null указатель"); }
+    if(other == nullptr){ 
+        throw NullPtrException("Null указатель"); 
+    }
     if(isInfinite){
         throw Exception("Невозможно выполнить конкатенацию бесконечной последовательности");
     }
@@ -240,7 +248,9 @@ LazySequence<T>* LazySequence<T>::Where(bool (*pred)(T), size_t count){
     LazySequence<T>* result = new LazySequence<T>();
     for(size_t i = 0; i < count; i++){
         T item = this->Get(i);
-        if(pred(item)){ result->cache.Append(item); }
+        if(pred(item)){ 
+            result->cache.Append(item); 
+        }
     }
     return result;
 }
