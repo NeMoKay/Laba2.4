@@ -47,13 +47,13 @@ public:
 
 class NullPtrException : public Exception{
 public:
-    NullPtrException(const char* message) : Exception(message)  {}
-    NullPtrException(const std::string& message) : Exception(message)  {}
+    NullPtrException(const char* message) : Exception(message) {}
+    NullPtrException(const std::string& message) : Exception(message) {}
 };
 
 class LengthMismatchException : public Exception{
 public:
-    LengthMismatchException(const char* message) : Exception(message)  {}
+    LengthMismatchException(const char* message) : Exception(message) {}
     LengthMismatchException(const std::string& message) : Exception(message)  {}
 };
 

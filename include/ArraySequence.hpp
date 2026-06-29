@@ -57,7 +57,7 @@ public:
 //protected
 template <typename T>
 ArraySequence<T>* ArraySequence<T>::Clone() const{
-    ArraySequence<T>* copy = new  ArraySequence<T>(*this);
+    ArraySequence<T>* copy = new ArraySequence<T>(*this);
     return copy;
     
 }
