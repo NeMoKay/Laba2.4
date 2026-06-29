@@ -2,22 +2,50 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QTabWidget>
+#include <QComboBox>
+#include <QLabel>
+#include <QPushButton>
+#include <QTextEdit>
+#include <QGroupBox>
+#include <QTableWidget>
 
-QT_BEGIN_NAMESPACE
-namespace Ui{
-class MainWindow;
-}
-QT_END_NAMESPACE
-
-class MainWindow : public QMainWindow
-{
+class MainWindow : public QMainWindow{
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = nullptr);
+    MainWindow(QWidget *parent = nullptr);
     ~MainWindow() override;
 
+protected:
+    void paintEvent(QPaintEvent *event) override;
+
+private slots:
+    void onRun();
+    void onGenerateTestData();
+
 private:
-    Ui::MainWindow *ui;
+    void setupIndexTab();
+    void normalizeTable(QTableWidget* table);
+
+    template <template <typename> class Container>
+    void executeIndexing();
+
+    QTabWidget *tabs;
+    QWidget *tabIndex;
+
+    QGroupBox *groupSettings;
+    QComboBox *comboContainer;
+
+    QGroupBox *groupInput;
+    QTextEdit *textInput;
+    QPushButton *btnGenerateData;
+
+    QPushButton *btnRun;
+
+    QGroupBox *groupResult;
+    QLabel *labelResultTitle;
+    QTableWidget *tableResult;
 };
-#endif // MAINWINDOW_H
+
+#endif
