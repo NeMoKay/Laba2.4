@@ -9,7 +9,7 @@
 #include "Stream.hpp"
 #include "AlphabetIndex.hpp"
 
-// Вспомогательные функции для проверок
+
 template <typename T1, typename T2>
 testing::AssertionResult CheckSize(const T1& actual, const T2& expected){
     if (actual == expected){
@@ -75,7 +75,7 @@ protected:
         ArraySequence<int>* init_inf = new ArraySequence<int>();
         init_inf->Append(1);
         infinite_lazy = new LazySequence<int>(NaturalGen, init_inf);
-        delete init_inf; // Очищаем временный массив
+        delete init_inf;
 
         empty_lazy = new LazySequence<int>();
         arr_lazy = new LazySequence<int>(raw_arr, 3);
