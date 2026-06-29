@@ -160,13 +160,12 @@ DynamicArray<T>& DynamicArray<T>::operator=(const DynamicArray<T>& other){
     if (this != &other){
         delete[] data;
         size = other.size;
-        if (size > 0) {
+        if (size > 0){
             data = new T[size];
             for(size_t i = 0; i < size; i++){
                 data[i] = other.data[i];
             }
-        } 
-        else{
+        } else{
             data = nullptr;
         }
     }

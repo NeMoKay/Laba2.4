@@ -12,16 +12,16 @@ int main(int argc, char *argv[]){
     QTranslator translator;
     QString locale = QLocale::system().name(); 
     
-    if (translator.load(":/i18n/" + locale + ".qm")) {
+    if (translator.load(":/i18n/" + locale + ".qm")){
         a.installTranslator(&translator);
     } 
 
-    else if (translator.load(":/i18n/ru_RU.qm")) {
+    else if (translator.load(":/i18n/ru_RU.qm")){
         a.installTranslator(&translator);
     }
 
     QFile styleFile(":/style.qss");
-    if (styleFile.open(QFile::ReadOnly)) {
+    if (styleFile.open(QFile::ReadOnly)){
         a.setStyleSheet(styleFile.readAll());
     }
 

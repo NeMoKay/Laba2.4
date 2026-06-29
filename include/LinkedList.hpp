@@ -348,6 +348,7 @@ LinkedList<T>& LinkedList<T>::operator=(const LinkedList<T>& other){
         head = nullptr;
         tail = nullptr;
 
+
         Node* other_elem = other.head;
         while(other_elem != nullptr){
             Append(other_elem->value);
