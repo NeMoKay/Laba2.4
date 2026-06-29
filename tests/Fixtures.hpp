@@ -9,40 +9,50 @@
 #include "Stream.hpp"
 #include "AlphabetIndex.hpp"
 
+// Вспомогательные функции для проверок
 template <typename T1, typename T2>
 testing::AssertionResult CheckSize(const T1& actual, const T2& expected){
-    if (actual == expected) return testing::AssertionSuccess();
+    if (actual == expected){
+        return testing::AssertionSuccess();
+    }
     return testing::AssertionFailure() << "Ожидалось: " << expected << ", По факту: " << actual;
 }
 
 template <typename T1, typename T2>
 testing::AssertionResult CheckVal(const T1& actual, const T2& expected){
-    if (actual == expected) return testing::AssertionSuccess();
+    if (actual == expected){
+        return testing::AssertionSuccess();
+    }
     return testing::AssertionFailure() << "Ожидалось: " << expected << ", По факту: " << actual;
 }
 
 template <typename T1, typename T2>
 testing::AssertionResult CheckBool(const T1& actual, const T2& expected){
-    if (actual == expected) return testing::AssertionSuccess();
+    if (actual == expected){
+        return testing::AssertionSuccess();
+    }
     return testing::AssertionFailure() << "Ожидалось: " << (expected ? "true" : "false") << ", По факту: " << (actual ? "true" : "false");
 }
 
 
 inline int NaturalGen(Sequence<int>* cache){
-    if (cache->GetLength() == 0) return 1;
+    if (cache->GetLength() == 0){
+        return 1;
+    }
     return cache->GetLast() + 1;
 }
 
 inline int SquareMap(int x){ 
     return x * x; 
 }
+
 inline bool IsEven(int x){ 
     return x % 2 == 0; 
 }
-inline int SumReduce(int acc, int x){
-     return acc + x; 
-}
 
+inline int SumReduce(int acc, int x){
+    return acc + x; 
+}
 
 
 class LazySequence_Fixture : public testing::Test{
@@ -56,12 +66,16 @@ protected:
 
     void SetUp() override{
         base_seq = new ArraySequence<int>();
-        base_seq->Append(10)->Append(20)->Append(30);
+        base_seq->Append(10);
+        base_seq->Append(20);
+        base_seq->Append(30);
+        
         finite_lazy = new LazySequence<int>(base_seq);
         
         ArraySequence<int>* init_inf = new ArraySequence<int>();
         init_inf->Append(1);
         infinite_lazy = new LazySequence<int>(NaturalGen, init_inf);
+        delete init_inf; // Очищаем временный массив
 
         empty_lazy = new LazySequence<int>();
         arr_lazy = new LazySequence<int>(raw_arr, 3);
@@ -76,6 +90,7 @@ protected:
     }
 };
 
+
 class Stream_Fixture : public testing::Test{
 protected:
     ArraySequence<std::string>* text_seq;
@@ -87,16 +102,23 @@ protected:
 
     void SetUp() override{
         text_seq = new ArraySequence<std::string>();
-        text_seq->Append("test")->Append("stream")->Append("test")->Append("read");
+        text_seq->Append("test");
+        text_seq->Append("stream");
+        text_seq->Append("test");
+        text_seq->Append("read");
+        
         text_stream = new ReadOnlyStream<std::string>(text_seq);
         
         lazy_target = new LazySequence<int>();
-        write_stream = new WriteOnlyStream<int>(*lazy_target);
+        write_stream = new WriteOnlyStream<int>(lazy_target);
 
         ArraySequence<int>* init_inf = new ArraySequence<int>();
         init_inf->Append(1);
+        
         infinite_lazy = new LazySequence<int>(NaturalGen, init_inf);
         lazy_read_stream = new ReadOnlyStream<int>(infinite_lazy);
+        
+        delete init_inf;
     }
 
     void TearDown() override{
@@ -109,6 +131,7 @@ protected:
     }
 };
 
+
 class AlphavitIndex_Fixture : public testing::Test{
 protected:
     ArraySequence<std::string>* text_seq;
@@ -117,7 +140,11 @@ protected:
 
     void SetUp() override{
         text_seq = new ArraySequence<std::string>();
-        text_seq->Append("apple")->Append("banana")->Append("apple")->Append("cherry");
+        text_seq->Append("apple");
+        text_seq->Append("banana");
+        text_seq->Append("apple");
+        text_seq->Append("cherry");
+        
         text_stream = new ReadOnlyStream<std::string>(text_seq);
         alpha_index = new AlphavitIndex<ArraySequence>();
     }

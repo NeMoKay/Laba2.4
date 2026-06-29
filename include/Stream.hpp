@@ -7,8 +7,8 @@
 template <typename T>
 class ReadOnlyStream{
 private:
-    Sequence<T>* seqSource;
-    LazySequence<T>* lazySource;
+    Sequence<T>* seq;
+    LazySequence<T>* lazyseq;
     size_t position;
     bool isFinite;
     bool isLazy;
@@ -30,11 +30,11 @@ public:
 template <typename T>
 class WriteOnlyStream{
 private:
-    LazySequence<T>& target;
+    LazySequence<T>* target;
     size_t position;
 
 public:
-    WriteOnlyStream(LazySequence<T>& lazySeq);
+    WriteOnlyStream(LazySequence<T>* lazySeq);
 
     size_t GetPosition() const;
     size_t Write(T item);
@@ -45,11 +45,11 @@ public:
 
 template <typename T>
 ReadOnlyStream<T>::ReadOnlyStream(Sequence<T>* seq)
-: seqSource(seq), lazySource(nullptr), position(0), isFinite(true), isLazy(false) {}
+: seq(seq), lazyseq(nullptr), position(0), isFinite(true), isLazy(false) {}
 
 template <typename T>
 ReadOnlyStream<T>::ReadOnlyStream(LazySequence<T>* lazySeq)
-: seqSource(nullptr), lazySource(lazySeq), position(0), isLazy(true){
+: seq(nullptr), lazyseq(lazySeq), position(0), isLazy(true){
     isFinite = !lazySeq->GetLength().IsInfinite();
 }
 
@@ -59,10 +59,10 @@ bool ReadOnlyStream<T>::IsEndOfStream() const{
         return false; 
     }
     if(isLazy){
-        return position >= lazySource->GetMaterializedCount();
+        return position >= lazyseq->GetMaterializedCount();
     } 
     else{
-        return position >= seqSource->GetLength();
+        return position >= seq->GetLength();
     }
 }
 
@@ -73,10 +73,10 @@ T ReadOnlyStream<T>::Read(){
     }
     T item;
     if(isLazy){
-        item = lazySource->Get(position);
+        item = lazyseq->Get(position);
     } 
     else{
-        item = seqSource->Get(position);
+        item = seq->Get(position);
     }
     position++;
     return item;
@@ -95,7 +95,14 @@ bool ReadOnlyStream<T>::IsCanSeek() const{
 template <typename T>
 size_t ReadOnlyStream<T>::Seek(size_t index){
     if(isFinite){
-        size_t maxLen = isLazy ? lazySource->GetMaterializedCount() : seqSource->GetLength();
+        size_t maxLen;
+        if (isLazy){
+            maxLen = lazyseq->GetMaterializedCount();
+        } 
+        else{
+            maxLen = seq->GetLength();
+        }
+        
         if(index >= maxLen){
             throw IndexOutOfRangeException("Ошибка индекса потока");
         }
@@ -119,8 +126,12 @@ void ReadOnlyStream<T>::Close(){
 
 
 template <typename T>
-WriteOnlyStream<T>::WriteOnlyStream(LazySequence<T>& lazySeq)
-: target(lazySeq), position(0) {}
+WriteOnlyStream<T>::WriteOnlyStream(LazySequence<T>* lazySeq)
+: target(lazySeq), position(0){
+    if (target == nullptr){
+        throw NullPtrException("Передан null-указатель в WriteOnlyStream");
+    }
+}
 
 template <typename T>
 size_t WriteOnlyStream<T>::GetPosition() const{ 
@@ -129,7 +140,7 @@ size_t WriteOnlyStream<T>::GetPosition() const{
 
 template <typename T>
 size_t WriteOnlyStream<T>::Write(T item){
-    target.Append(item);
+    target->Append(item);
     position++;
     return position;
 }

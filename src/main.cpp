@@ -1,25 +1,23 @@
 #include <iostream>
+#include <functional>
 
 #include "sequence.hpp"
 #include "ArraySequence.hpp"
-#include "LinkedList.hpp"
 #include "LazySequence.hpp"
-#include "AlphavitIndex.hpp"
-
 
 int main(){
-    int A[5] ={1,2,3,4,5};
-    ArraySequence<int> B(A);
+    ArraySequence<int> seed;
+    seed.Append(1);
 
-    std::cout << B.GetLength();
+    std::function<int(Sequence<int>*)> gen = [](Sequence<int>* cache){
+        return cache->GetLast() + 1;
+    };
 
+    LazySequence<int> naturals(gen, &seed);
 
+    std::cout << naturals.Get(0) << "\n";
+    std::cout << naturals.Get(4) << "\n";
+    std::cout << naturals.Get(9) << "\n";
 
     return 0;
 }
-
-
-
-
-
-

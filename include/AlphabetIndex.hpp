@@ -14,6 +14,9 @@ public:
     AlphavitIndex();
 
     void BuildFromStream(ReadOnlyStream<std::string>& stream);
+    void AddWord(const std::string& word, size_t position);
+    void Clear();
+    
     ArraySequence<size_t> GetWordPositions(const std::string& word) const;
     Container<Pair<std::string, ArraySequence<size_t>>> GetAllEntries() const;
 };
@@ -25,18 +28,24 @@ AlphavitIndex<Container>::AlphavitIndex() {}
 template <template <typename> class Container>
 void AlphavitIndex<Container>::BuildFromStream(ReadOnlyStream<std::string>& stream){
     stream.Open();
-    
     while(!stream.IsEndOfStream()){
         std::string word = stream.Read();
         size_t currentPosition = stream.GetPosition() - 1; 
-        
-        ArraySequence<size_t> positions = indexDict.Get(word);
-        
-        positions.Append(currentPosition);
-        indexDict.Set(word, positions);
+        AddWord(word, currentPosition);
     }
-    
     stream.Close();
+}
+
+template <template <typename> class Container>
+void AlphavitIndex<Container>::AddWord(const std::string& word, size_t position){
+    ArraySequence<size_t> positions = indexDict.Get(word);
+    positions.Append(position);
+    indexDict.Set(word, positions);
+}
+
+template <template <typename> class Container>
+void AlphavitIndex<Container>::Clear(){
+    indexDict = Dict<std::string, ArraySequence<size_t>, Container>();
 }
 
 template <template <typename> class Container>
