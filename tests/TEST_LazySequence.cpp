@@ -12,12 +12,12 @@ TEST_P(LazyConstructorTest, arr_constructor){
     if (testing::Test::HasFailure()){
         std::cout << "\n---Тестирование конструктора LazySequence от массива---\n";
         std::cout << "Исходный массив:{1, 2, 3}\n";
-        std::cout << "Запрашиваемый индекс: " << index << "\n";
+        std::cout << "Запрашиваемый инsдекс: " << index << "\n";
         std::cout << "Ожидаемое значение: " << expected << "\n";
     }
 }
 INSTANTIATE_TEST_SUITE_P(LazyArrParams, LazyConstructorTest, testing::Values(
-    std::make_tuple(0, 1),
+    std::make_tuple(0, 0), // 0 1
     std::make_tuple(1, 2),
     std::make_tuple(2, 3)
 ));
@@ -130,7 +130,7 @@ TEST_F(LazySequence_Fixture, concat_and_subsequence){
 
     if (testing::Test::HasFailure()){
         std::cout << "\n---Тестирование методов Concat и GetSubsequence---\n";
-        std::cout << "Конкатенация:{10, 20, 30} и{1, 2, 3}\n";
+        std::cout << "Конкатенация:{10, 20, 30} и {1, 2, 3}\n";
         std::cout << "Ожидаемый размер после Concat: 6\n";
         std::cout << "GetSubsequence от индекса 1 до 4. Ожидаемый результат:{20, 30, 1, 2}\n";
     }
