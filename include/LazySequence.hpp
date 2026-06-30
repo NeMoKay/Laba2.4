@@ -54,7 +54,7 @@ public:
     LazySequence<T>* InsertAt(T item, size_t index);
     LazySequence<T>* Concat(LazySequence<T>* other);
 
-    class Iterator {
+    class Iterator{
     private:
         LazySequence<T>* seq;
         size_t index;
@@ -139,7 +139,7 @@ LazySequence<T>::LazySequence(Sequence<T>* sequence) : length(sequence->GetLengt
 }
 
 template <typename T>
-LazySequence<T>::LazySequence(const LazySequence<T>& other) : cache(other.cache), generator(other.generator), length(other.length){}
+LazySequence<T>::LazySequence(const LazySequence<T>& other) : cache(other.cache), generator(other.generator), length(other.length) {}
 
 template <typename T>
 LazySequence<T>::LazySequence(std::function<T(Sequence<T>*)> gen, Sequence<T>* initialItems) : generator(gen), length(){
@@ -284,18 +284,18 @@ template <typename T>
 LazySequence<T>::Iterator::Iterator(LazySequence<T>* s, size_t i) : seq(s), index(i) {}
 
 template <typename T>
-T LazySequence<T>::Iterator::operator*() {
+T LazySequence<T>::Iterator::operator*(){
     return seq->Get(index);
 }
 
 template <typename T>
-typename LazySequence<T>::Iterator& LazySequence<T>::Iterator::operator++() {
+typename LazySequence<T>::Iterator& LazySequence<T>::Iterator::operator++(){
     index++;
     return *this;
 }
 
 template <typename T>
-bool LazySequence<T>::Iterator::operator!=(const Iterator& other) const {
+bool LazySequence<T>::Iterator::operator!=(const Iterator& other) const{
     return index != other.index;
 }
 

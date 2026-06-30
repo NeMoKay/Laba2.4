@@ -3,14 +3,12 @@
 #include <QHBoxLayout>
 #include <QFormLayout>
 #include <QPainter>
-#include <QGraphicsDropShadowEffect>
 #include <QMessageBox>
 #include <QHeaderView>
 #include <QFile>
 #include <QTextStream>
 #include <QStringConverter> 
 #include <QRegularExpression>
-#include <vector>
 #include <sstream>
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent){
@@ -19,23 +17,28 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent){
 
     timer = new QTimer(this);
     timer->setInterval(150); 
-
     connect(timer, &QTimer::timeout, this, &MainWindow::onTimerTick);
 
     tabs = new QTabWidget(this);
     tabs->setGeometry(0, 0, 900, 750);
-
     tabIndex = new QWidget();
     tabs->addTab(tabIndex, tr("Alphabet Index"));
-
     setupIndexTab();
 }
 
 MainWindow::~MainWindow(){
-    delete liveSequence;
-    delete liveStream;
-    delete liveIndexArr;
-    delete liveIndexList;
+    clearLiveResources();
+}
+
+void MainWindow::clearLiveResources(){
+    delete liveSequence; 
+    liveSequence = nullptr;
+    delete liveStream;   
+    liveStream = nullptr;
+    delete liveIndexArr; 
+    liveIndexArr = nullptr;
+    delete liveIndexList; 
+    liveIndexList = nullptr;
 }
 
 void MainWindow::paintEvent(QPaintEvent *event){
@@ -57,14 +60,10 @@ void MainWindow::setupIndexTab(){
 
     groupSettings = new QGroupBox(tr("Settings"));
     QFormLayout *setLay = new QFormLayout(groupSettings);
-    
     comboContainer = new QComboBox();
     comboContainer->addItems({"ArraySequence", "ListSequence"});
-    
     comboInputMode = new QComboBox();
-    comboInputMode->addItem(tr("Manual Input"));
-    comboInputMode->addItem(tr("Live Test Stream"));
-    
+    comboInputMode->addItems({tr("Manual Input"), tr("Live Test Stream")});
     setLay->addRow(tr("Container:"), comboContainer);
     setLay->addRow(tr("Input Mode:"), comboInputMode);
     lay->addWidget(groupSettings);
@@ -73,23 +72,20 @@ void MainWindow::setupIndexTab(){
     QVBoxLayout *manLay = new QVBoxLayout(groupManual);
     textInput = new QTextEdit();
     textInput->setPlaceholderText(tr("Enter your text here..."));
-    manLay->addWidget(textInput);
     btnGenerateData = new QPushButton(tr("Generate Test Data"));
+    manLay->addWidget(textInput);
     manLay->addWidget(btnGenerateData);
     lay->addWidget(groupManual, 2);
 
     groupLive = new QGroupBox(tr("Live Data Stream"));
     QVBoxLayout *livLay = new QVBoxLayout(groupLive);
     QHBoxLayout *genRow = new QHBoxLayout();
-    genRow->addWidget(new QLabel(tr("Generator:")));
-    
     comboGen = new QComboBox();
-    comboGen->addItem(tr("Random Words"));
-    comboGen->addItem(tr("Repeating Pattern"));
+    comboGen->addItems({tr("Random Words"), tr("Repeating Pattern")});
+    genRow->addWidget(new QLabel(tr("Generator:")));
     genRow->addWidget(comboGen);
     genRow->addStretch();
     livLay->addLayout(genRow);
-    
     labelLiveInfo = new QLabel(tr("Processed words: 0"));
     labelLiveInfo->setStyleSheet("color: #a0c4ff; font-style: italic;");
     livLay->addWidget(labelLiveInfo);
@@ -106,17 +102,11 @@ void MainWindow::setupIndexTab(){
 
     groupResult = new QGroupBox(tr("Result"));
     QVBoxLayout *resLay = new QVBoxLayout(groupResult);
-    
-    labelResultTitle = new QLabel(tr("Index Table:"));
-    labelResultTitle->setProperty("class", "ResultLabel");
-    resLay->addWidget(labelResultTitle);
-    
     tableResult = new QTableWidget(0, 3);
     tableResult->setHorizontalHeaderLabels({tr("Word"), tr("Count"), tr("Positions")});
     tableResult->setEditTriggers(QAbstractItemView::NoEditTriggers);
     normalizeTable(tableResult);
     resLay->addWidget(tableResult);
-    
     lay->addWidget(groupResult, 3);
 
     connect(comboInputMode, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::onInputModeChanged);
@@ -126,13 +116,12 @@ void MainWindow::setupIndexTab(){
 }
 
 void MainWindow::onInputModeChanged(int index){
-    if (index == 0){
-        groupManual->setVisible(true);
-        groupLive->setVisible(false);
-    }
-    else{
+    if (index == 1){
         groupManual->setVisible(false);
         groupLive->setVisible(true);
+    } else{
+        groupManual->setVisible(true);
+        groupLive->setVisible(false);
     }
     onStop();
     tableResult->setRowCount(0);
@@ -141,11 +130,8 @@ void MainWindow::onInputModeChanged(int index){
 void MainWindow::onGenerateTestData(){
     QFile file(":/poem.txt");
     if (file.open(QIODevice::ReadOnly | QIODevice::Text)){
-        QTextStream in(&file);
-        in.setEncoding(QStringConverter::Utf8);
-        textInput->setPlainText(in.readAll());
-    } 
-    else{
+        textInput->setPlainText(QString::fromUtf8(file.readAll()));
+    } else{
         textInput->setPlainText("Ошибка: файл poem.txt не найден.");
     }
 }
@@ -155,28 +141,22 @@ void MainWindow::populateTable(AlphavitIndex<Container>* index){
     if (index == nullptr){
         return;
     }
-
     auto entries = index->GetAllEntries();
     tableResult->setRowCount(entries.GetLength());
 
     for (size_t i = 0; i < entries.GetLength(); ++i){
         auto entry = entries.Get(i);
         tableResult->setItem(i, 0, new QTableWidgetItem(QString::fromStdString(entry.elem1)));
+        tableResult->setItem(i, 1, new QTableWidgetItem(QString::number(entry.elem2.GetLength())));
         
-        size_t count = entry.elem2.GetLength();
-        tableResult->setItem(i, 1, new QTableWidgetItem(QString::number(count)));
-        
-        QString positionsStr = "[ ";
-        for (size_t p = 0; p < count; ++p){
-            positionsStr += QString::number(entry.elem2.Get(p));
-            
-            if (p < count - 1){
-                positionsStr += ", ";
+        QString pos;
+        for (size_t p = 0; p < entry.elem2.GetLength(); ++p){
+            pos += QString::number(entry.elem2.Get(p));
+            if (p < entry.elem2.GetLength() - 1){
+                pos += ", ";
             }
         }
-        positionsStr += " ]";
-        
-        tableResult->setItem(i, 2, new QTableWidgetItem(positionsStr));
+        tableResult->setItem(i, 2, new QTableWidgetItem("[ " + pos + " ]"));
     }
     tableResult->resizeColumnsToContents();
 }
@@ -190,10 +170,8 @@ void MainWindow::executeManualIndexing(){
             return;
         }
 
-        std::string text = qtext.toStdString();
-        std::stringstream ss(text);
+        std::stringstream ss(qtext.toStdString());
         std::string word;
-        
         Container<std::string> inputWords;
         while (ss >> word){
             inputWords.Append(word);
@@ -202,47 +180,30 @@ void MainWindow::executeManualIndexing(){
         ReadOnlyStream<std::string> stream(&inputWords);
         AlphavitIndex<Container> index;
         index.BuildFromStream(stream);
-
         populateTable(&index);
-
-    } catch (const Exception& e){
+    } 
+    catch (const Exception& e){
         QMessageBox::warning(this, tr("Error"), QString::fromUtf8(e.what()));
     }
 }
 
 void MainWindow::onRun(){
+    onStop();
     if (comboInputMode->currentIndex() == 0){
-        onStop();
-        
         if (comboContainer->currentIndex() == 0){
             executeManualIndexing<ArraySequence>();
-        } 
-        else{
+        } else{
             executeManualIndexing<ListSequence>();
         }
-    } 
-    else{
-        onStop();
-        
-        delete liveSequence; 
-        liveSequence = nullptr;
-        
-        delete liveStream; 
-        liveStream = nullptr;
-        
-        delete liveIndexArr; 
-        liveIndexArr = nullptr;
-        
-        delete liveIndexList; 
-        liveIndexList = nullptr;
-
+    } else{
+        clearLiveResources();
         processedCount = 0;
         tableResult->setRowCount(0);
         labelLiveInfo->setText(tr("Processed words: 0"));
 
         if (comboContainer->currentIndex() == 0){
             liveIndexArr = new AlphavitIndex<ArraySequence>();
-        }
+        } 
         else{
             liveIndexList = new AlphavitIndex<ListSequence>();
         }
@@ -251,48 +212,37 @@ void MainWindow::onRun(){
         seed.Append("start");
 
         if (comboGen->currentIndex() == 0){
-            
             std::vector<std::string> poemWords;
             QFile file(":/poem.txt");
             if (file.open(QIODevice::ReadOnly | QIODevice::Text)){
-                QTextStream in(&file);
-                in.setEncoding(QStringConverter::Utf8);
-                QString text = in.readAll();
-                
-                QStringList list = text.split(QRegularExpression("\\s+"), Qt::SkipEmptyParts);
-                
+                QStringList list = QString::fromUtf8(file.readAll()).split(QRegularExpression("\\s+"), Qt::SkipEmptyParts);
                 for (const QString& w : list){
-                    poemWords.push_back(w.toLower().toStdString()); 
+                    poemWords.push_back(w.toLower().toStdString());
                 }
             }
             if (poemWords.empty()){
                 poemWords.push_back("ошибка");
             }
 
-            std::function<std::string(Sequence<std::string>*)> randomWordGen = [poemWords](Sequence<std::string>*){
+            liveSequence = new LazySequence<std::string>([poemWords](Sequence<std::string>*){
                 return poemWords[rand() % poemWords.size()];
-            };
-            liveSequence = new LazySequence<std::string>(randomWordGen, &seed);
+            }, &seed);
         } 
         else{
-            std::function<std::string(Sequence<std::string>*)> patternGen = [](Sequence<std::string>* c){
+            liveSequence = new LazySequence<std::string>([](Sequence<std::string>* c){
                 size_t len = c->GetLength();
-                
                 if (len % 3 == 0){
                     return std::string("любовь");
-                }
+                } 
                 else if (len % 3 == 1){
                     return std::string("надежда");
-                }
+                } 
                 else{
                     return std::string("слава");
                 }
-            };
-            liveSequence = new LazySequence<std::string>(patternGen, &seed);
+            }, &seed);
         }
-
         liveStream = new ReadOnlyStream<std::string>(liveSequence);
-        
         btnRun->setEnabled(false);
         btnStop->setEnabled(true);
         timer->start();
@@ -300,20 +250,24 @@ void MainWindow::onRun(){
 }
 
 void MainWindow::onTimerTick(){
-    if (liveStream == nullptr){ 
-        onStop(); 
-        return; 
+    if (liveStream == nullptr){
+        onStop();
+        return;
     }
-
+    
     std::string word = liveStream->Read();
     
-    if (comboContainer->currentIndex() == 0 && liveIndexArr != nullptr){
-        liveIndexArr->AddWord(word, processedCount);
-        populateTable(liveIndexArr);
+    if (comboContainer->currentIndex() == 0){
+        if (liveIndexArr != nullptr){
+            liveIndexArr->AddWord(word, processedCount);
+            populateTable(liveIndexArr);
+        }
     } 
-    else if (comboContainer->currentIndex() == 1 && liveIndexList != nullptr){
-        liveIndexList->AddWord(word, processedCount);
-        populateTable(liveIndexList);
+    else{
+        if (liveIndexList != nullptr){
+            liveIndexList->AddWord(word, processedCount);
+            populateTable(liveIndexList);
+        }
     }
     
     processedCount++;

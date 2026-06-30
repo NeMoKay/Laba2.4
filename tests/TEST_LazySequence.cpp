@@ -130,7 +130,7 @@ TEST_F(LazySequence_Fixture, concat_and_subsequence){
 
     if (testing::Test::HasFailure()){
         std::cout << "\n---Тестирование методов Concat и GetSubsequence---\n";
-        std::cout << "Конкатенация:{10, 20, 30} и {1, 2, 3}\n";
+        std::cout << "Конкатенация:{10, 20, 30} и{1, 2, 3}\n";
         std::cout << "Ожидаемый размер после Concat: 6\n";
         std::cout << "GetSubsequence от индекса 1 до 4. Ожидаемый результат:{20, 30, 1, 2}\n";
     }

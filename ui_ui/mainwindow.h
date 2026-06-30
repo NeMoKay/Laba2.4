@@ -10,6 +10,7 @@
 #include <QGroupBox>
 #include <QTableWidget>
 #include <QTimer>
+#include <functional>
 
 #include "AlphabetIndex.hpp"
 #include "ArraySequence.hpp"
@@ -27,6 +28,7 @@ public:
 protected:
     void paintEvent(QPaintEvent *event) override;
 
+private slots:
     void onRun();
     void onStop();
     void onInputModeChanged(int index);
@@ -36,6 +38,7 @@ protected:
 private:
     void setupIndexTab();
     void normalizeTable(QTableWidget* table);
+    void clearLiveResources();
 
     template <template <typename> class Container>
     void executeManualIndexing();
@@ -45,35 +48,18 @@ private:
 
     QTabWidget *tabs;
     QWidget *tabIndex;
-
-    QGroupBox *groupSettings;
-    QComboBox *comboContainer;
-    QComboBox *comboInputMode;
-
-    QGroupBox *groupManual;
+    QGroupBox *groupSettings, *groupManual, *groupLive, *groupResult;
+    QComboBox *comboContainer, *comboInputMode, *comboGen;
     QTextEdit *textInput;
-    QPushButton *btnGenerateData;
-
-    QGroupBox *groupLive;
-    QComboBox *comboGen;
-    QLabel *labelLiveInfo;
-
-    QPushButton *btnRun;
-    QPushButton *btnStop;
-
-    QGroupBox *groupResult;
-    QLabel *labelResultTitle;
+    QPushButton *btnGenerateData, *btnRun, *btnStop;
+    QLabel *labelLiveInfo, *labelResultTitle;
     QTableWidget *tableResult;
-
-
-
 
     QTimer *timer;
     size_t processedCount = 0;
     
     LazySequence<std::string>* liveSequence = nullptr;
     ReadOnlyStream<std::string>* liveStream = nullptr;
-
     AlphavitIndex<ArraySequence>* liveIndexArr = nullptr;
     AlphavitIndex<ListSequence>* liveIndexList = nullptr;
 };
