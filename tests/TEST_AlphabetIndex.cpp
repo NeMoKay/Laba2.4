@@ -28,7 +28,7 @@ TEST_P(AlphavitIndexSearchTest, build_and_search){
     }
 }
 INSTANTIATE_TEST_SUITE_P(AlphavitIndexParams, AlphavitIndexSearchTest, testing::Values(
-    std::make_tuple("apple", 2, 0), // 2 0
+    std::make_tuple("apple", 2, 0),
     std::make_tuple("banana", 1, 1),
     std::make_tuple("cherry", 1, 3),
     std::make_tuple("missing", 0, 0)

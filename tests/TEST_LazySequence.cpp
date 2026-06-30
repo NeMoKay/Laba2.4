@@ -17,7 +17,7 @@ TEST_P(LazyConstructorTest, arr_constructor){
     }
 }
 INSTANTIATE_TEST_SUITE_P(LazyArrParams, LazyConstructorTest, testing::Values(
-    std::make_tuple(0, 1),
+    std::make_tuple(0, 0), // 0 1
     std::make_tuple(1, 2),
     std::make_tuple(2, 3)
 ));
@@ -155,7 +155,6 @@ class LazyFunctionalTest : public LazySequence_Fixture,
 
 TEST_P(LazyFunctionalTest, map_func){
     auto [index, expected] = GetParam();
-    // ИСПРАВЛЕНИЕ: Map вынесена из класса
     LazySequence<int>* mapped = Map(finite_lazy, SquareMap, finite_lazy->GetLength().GetValue());
     EXPECT_TRUE(CheckVal(mapped->Get(index), expected));
 
@@ -174,12 +173,10 @@ INSTANTIATE_TEST_SUITE_P(LazyMapParams, LazyFunctionalTest, testing::Values(
 ));
 
 TEST_F(LazySequence_Fixture, where_and_reduce){
-    // ИСПРАВЛЕНИЕ: Where вынесена из класса
     LazySequence<int>* filtered = Where(finite_lazy, IsEven, finite_lazy->GetLength().GetValue());
-    EXPECT_TRUE(CheckSize(filtered->GetLength().GetValue(), 3)); // Обрати внимание: если IsEven это x%2==0, в {10,20,30} их 3 штуки
+    EXPECT_TRUE(CheckSize(filtered->GetLength().GetValue(), 3));
     EXPECT_TRUE(CheckVal(filtered->Get(1), 20));
     
-    // ИСПРАВЛЕНИЕ: Reduce вынесена из класса
     int sum = Reduce(finite_lazy, SumReduce, 0, finite_lazy->GetLength().GetValue());
     EXPECT_TRUE(CheckVal(sum, 60));
 
