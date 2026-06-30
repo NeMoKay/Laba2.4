@@ -259,8 +259,6 @@ void MainWindow::onRun(){
                 in.setEncoding(QStringConverter::Utf8);
                 QString text = in.readAll();
                 
-
-                text = text.replace(QRegularExpression("[^А-Яа-яA-Za-zЁё]+"), " ");
                 QStringList list = text.split(QRegularExpression("\\s+"), Qt::SkipEmptyParts);
                 
                 for (const QString& w : list){
@@ -294,7 +292,6 @@ void MainWindow::onRun(){
         }
 
         liveStream = new ReadOnlyStream<std::string>(liveSequence);
-        liveStream->Open();
         
         btnRun->setEnabled(false);
         btnStop->setEnabled(true);

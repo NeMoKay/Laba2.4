@@ -27,13 +27,11 @@ AlphavitIndex<Container>::AlphavitIndex() {}
 
 template <template <typename> class Container>
 void AlphavitIndex<Container>::BuildFromStream(ReadOnlyStream<std::string>& stream){
-    stream.Open();
     while(!stream.IsEndOfStream()){
         std::string word = stream.Read();
         size_t currentPosition = stream.GetPosition() - 1; 
         AddWord(word, currentPosition);
     }
-    stream.Close();
 }
 
 template <template <typename> class Container>

@@ -20,11 +20,7 @@ public:
     bool IsEndOfStream() const;
     T Read();
     size_t GetPosition() const;
-    bool IsCanSeek() const;
     size_t Seek(size_t index);
-    bool IsCanGoBack() const;
-    void Open();
-    void Close();
 };
 
 template <typename T>
@@ -38,8 +34,6 @@ public:
 
     size_t GetPosition() const;
     size_t Write(T item);
-    void Open();
-    void Close();
 };
 
 
@@ -88,11 +82,6 @@ size_t ReadOnlyStream<T>::GetPosition() const{
 }
 
 template <typename T>
-bool ReadOnlyStream<T>::IsCanSeek() const{ 
-    return true; 
-}
-
-template <typename T>
 size_t ReadOnlyStream<T>::Seek(size_t index){
     if(isFinite){
         size_t maxLen;
@@ -112,20 +101,6 @@ size_t ReadOnlyStream<T>::Seek(size_t index){
 }
 
 template <typename T>
-bool ReadOnlyStream<T>::IsCanGoBack() const{ 
-    return true; 
-}
-
-template <typename T>
-void ReadOnlyStream<T>::Open() {}
-
-template <typename T>
-void ReadOnlyStream<T>::Close(){ 
-    position = 0; 
-}
-
-
-template <typename T>
 WriteOnlyStream<T>::WriteOnlyStream(LazySequence<T>* lazySeq)
 : target(lazySeq), position(0){
     if (target == nullptr){
@@ -143,12 +118,4 @@ size_t WriteOnlyStream<T>::Write(T item){
     target->Append(item);
     position++;
     return position;
-}
-
-template <typename T>
-void WriteOnlyStream<T>::Open() {}
-
-template <typename T>
-void WriteOnlyStream<T>::Close(){ 
-    position = 0; 
 }
