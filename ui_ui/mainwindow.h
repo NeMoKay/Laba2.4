@@ -14,7 +14,6 @@
 
 #include "AlphabetIndex.hpp"
 #include "ArraySequence.hpp"
-#include "ListSequence.hpp"
 #include "LazySequence.hpp"
 #include "Stream.hpp"
 
@@ -40,19 +39,16 @@ private:
     void normalizeTable(QTableWidget* table);
     void clearLiveResources();
 
-    template <template <typename> class Container>
     void executeManualIndexing();
-
-    template <template <typename> class Container>
-    void populateTable(AlphavitIndex<Container>* index);
+    void populateTable(AlphavitIndex<ArraySequence>* index);
 
     QTabWidget *tabs;
     QWidget *tabIndex;
-    QGroupBox *groupSettings, *groupManual, *groupLive, *groupResult;
-    QComboBox *comboContainer, *comboInputMode, *comboGen;
+    QGroupBox *groupManual, *groupLive, *groupResult;
+    QComboBox *comboInputMode;
     QTextEdit *textInput;
-    QPushButton *btnGenerateData, *btnRun, *btnStop;
-    QLabel *labelLiveInfo, *labelResultTitle;
+    QPushButton *btnRun, *btnStop, *btnGenerateData;
+    QLabel *labelLiveInfo;
     QTableWidget *tableResult;
 
     QTimer *timer;
@@ -60,8 +56,7 @@ private:
     
     LazySequence<std::string>* liveSequence = nullptr;
     ReadOnlyStream<std::string>* liveStream = nullptr;
-    AlphavitIndex<ArraySequence>* liveIndexArr = nullptr;
-    AlphavitIndex<ListSequence>* liveIndexList = nullptr;
+    AlphavitIndex<ArraySequence>* liveIndex = nullptr;
 };
 
 #endif
