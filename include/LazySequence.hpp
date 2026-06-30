@@ -17,24 +17,15 @@ public:
     bool IsInfinite() const;
     size_t GetValue() const;
 
-    bool operator==(const Cardinal& other) const{
-        if (isInfinite == other.IsInfinite()){
+    bool operator==(const Cardinal& other){
+        if(isInfinite == other.IsInfinite()){
             return true;
         }
-        if (isInfinite != other.IsInfinite()){
+        if(isInfinite != other.IsInfinite()){
             return false;
         }
         return value == other.GetValue();
     }
-};
-
-template <typename T>
-class IEnumerator{
-public:
-    virtual bool MoveNext() = 0;
-    virtual T Current() = 0;
-    virtual void Reset() = 0;
-    virtual ~IEnumerator() = default;
 };
 
 template <typename T>
@@ -45,6 +36,7 @@ private:
     Cardinal length;
 
     void MaterializeUpTo(size_t index);
+    void Checker_build(size_t index);
 
 public:
     LazySequence();
@@ -67,15 +59,20 @@ public:
     LazySequence<T>* InsertAt(T item, size_t index);
     LazySequence<T>* Concat(LazySequence<T>* other);
 
-    template <typename U>
-    LazySequence<U>* Map(U (*func)(T), size_t count);
+    class Iterator {
+    private:
+        LazySequence<T>* seq;
+        size_t index;
 
-    LazySequence<T>* Where(bool (*pred)(T), size_t count);
+    public:
+        Iterator(LazySequence<T>* s, size_t i);
+        T operator*();
+        Iterator& operator++();
+        bool operator!=(const Iterator& other) const;
+    };
 
-    template <typename U>
-    U Reduce(U (*func)(U, T), U initial, size_t count);
-
-    IEnumerator<T>* GetEnumerator();
+    Iterator begin();
+    Iterator end();
 };
 
 inline Cardinal::Cardinal() : isInfinite(true), value(0) {}
@@ -92,75 +89,77 @@ inline size_t Cardinal::GetValue() const{
 
 template <typename T>
 void LazySequence<T>::MaterializeUpTo(size_t index){
-    if (index < cache.GetLength()){
+    if(index < cache.GetLength()){
         return;
     }
 
-    if (!length.IsInfinite()){
+    if(!length.IsInfinite() && index >= length.GetValue()){
         throw IndexOutOfRangeException("Индекс вне диапазона");
     }
 
-    while (cache.GetLength() <= index){
+    while(cache.GetLength() <= index){
         cache.Append(generator(&cache));
     }
 }
 
 template <typename T>
-LazySequence<T>::LazySequence()
-    : length(0) {}
+void LazySequence<T>::Checker_build(size_t index){
+    if(index >= cache.GetLength()){
+        MaterializeUpTo(index);
+        return;
+    }
+
+    if(cache.Get(index) == T()){
+        cache[index] = generator(&cache);
+    }
+}
 
 template <typename T>
-LazySequence<T>::LazySequence(T* items, size_t count)
-    : length(count){
-    if (items == nullptr){
+LazySequence<T>::LazySequence() : length(0) {}
+
+template <typename T>
+LazySequence<T>::LazySequence(T* items, size_t count) : length(count){
+    if(items == nullptr){
         throw NullPtrException("Null указатель");
     }
 
-    for (size_t i = 0; i < count; i++){
+    for(size_t i = 0; i < count; i++){
         cache.Append(items[i]);
     }
 }
 
 template <typename T>
-LazySequence<T>::LazySequence(Sequence<T>* sequence)
-    : length(sequence->GetLength()){
-    if (sequence == nullptr){
+LazySequence<T>::LazySequence(Sequence<T>* sequence) : length(sequence->GetLength()){
+    if(sequence == nullptr){
         throw NullPtrException("Null указатель");
     }
 
-    for (size_t i = 0; i < sequence->GetLength(); i++){
+    for(size_t i = 0; i < sequence->GetLength(); i++){
         cache.Append(sequence->Get(i));
     }
 }
 
 template <typename T>
-LazySequence<T>::LazySequence(const LazySequence<T>& other)
-    : cache(other.cache),
-      generator(other.generator),
-      length(other.length) {}
+LazySequence<T>::LazySequence(const LazySequence<T>& other) : cache(other.cache), generator(other.generator), length(other.length){}
 
 template <typename T>
-LazySequence<T>::LazySequence(
-    std::function<T(Sequence<T>*)> gen,
-    Sequence<T>* initialItems)
-    : generator(gen),
-      length(){
-    if (initialItems == nullptr){
+LazySequence<T>::LazySequence(std::function<T(Sequence<T>*)> gen, Sequence<T>* initialItems) : generator(gen), length(){
+    if(initialItems == nullptr){
         throw NullPtrException("Null указатель");
     }
 
-    if (initialItems->GetLength() == 0){
+    if(initialItems->GetLength() == 0){
         throw InvalidSizeException("Для генератора нужен хотя бы 1 элемент");
     }
 
-    for (size_t i = 0; i < initialItems->GetLength(); i++){
+    for(size_t i = 0; i < initialItems->GetLength(); i++){
         cache.Append(initialItems->Get(i));
     }
 }
 
 template <typename T>
 T LazySequence<T>::operator[](size_t index){
-    if (index >= cache.GetLength()){
+    if(index >= cache.GetLength()){
         MaterializeUpTo(index);
     }
 
@@ -169,7 +168,7 @@ T LazySequence<T>::operator[](size_t index){
 
 template <typename T>
 T LazySequence<T>::Get(size_t index){
-    if (index >= cache.GetLength()){
+    if(index >= cache.GetLength()){
         MaterializeUpTo(index);
     }
 
@@ -178,7 +177,7 @@ T LazySequence<T>::Get(size_t index){
 
 template <typename T>
 T LazySequence<T>::GetFirst(){
-    if (cache.GetLength() == 0){
+    if(cache.GetLength() == 0){
         throw EmptySequenceException("Пустой список");
     }
 
@@ -187,11 +186,11 @@ T LazySequence<T>::GetFirst(){
 
 template <typename T>
 T LazySequence<T>::GetLast(){
-    if (length.IsInfinite()){
+    if(length.IsInfinite()){
         throw Exception("Невозможно получить последний элемент бесконечной последовательности");
     }
 
-    if (cache.GetLength() == 0){
+    if(cache.GetLength() == 0){
         throw EmptySequenceException("Пустой список");
     }
 
@@ -200,11 +199,11 @@ T LazySequence<T>::GetLast(){
 
 template <typename T>
 LazySequence<T>* LazySequence<T>::GetSubsequence(size_t startIndex, size_t endIndex){
-    if (startIndex > endIndex){
+    if(startIndex > endIndex){
         throw IndexOutOfRangeException("Начальный индекс больше конечного");
     }
 
-    if (!length.IsInfinite() && endIndex >= cache.GetLength()){
+    if(!length.IsInfinite() && endIndex >= cache.GetLength()){
         throw IndexOutOfRangeException("Конечный индекс вне диапазона");
     }
 
@@ -212,7 +211,7 @@ LazySequence<T>* LazySequence<T>::GetSubsequence(size_t startIndex, size_t endIn
 
     LazySequence<T>* result = new LazySequence<T>();
 
-    for (size_t i = startIndex; i <= endIndex; i++){
+    for(size_t i = startIndex; i <= endIndex; i++){
         result->Append(cache.Get(i));
     }
 
@@ -231,7 +230,7 @@ Cardinal LazySequence<T>::GetLength() const{
 
 template <typename T>
 LazySequence<T>* LazySequence<T>::Append(T item){
-    if (length.IsInfinite()){
+    if(length.IsInfinite()){
         throw Exception("Невозможно добавить элемент в бесконечную последовательность");
     }
 
@@ -243,7 +242,7 @@ LazySequence<T>* LazySequence<T>::Append(T item){
 
 template <typename T>
 LazySequence<T>* LazySequence<T>::Prepend(T item){
-    if (length.IsInfinite()){
+    if(length.IsInfinite()){
         throw Exception("Невозможно добавить элемент в бесконечную последовательность");
     }
 
@@ -255,11 +254,11 @@ LazySequence<T>* LazySequence<T>::Prepend(T item){
 
 template <typename T>
 LazySequence<T>* LazySequence<T>::InsertAt(T item, size_t index){
-    if (length.IsInfinite()){
+    if(length.IsInfinite()){
         throw Exception("Невозможно изменить бесконечную последовательность");
     }
 
-    if (index > cache.GetLength()){
+    if(index > cache.GetLength()){
         throw IndexOutOfRangeException("Индекс вне диапазона");
     }
 
@@ -271,15 +270,15 @@ LazySequence<T>* LazySequence<T>::InsertAt(T item, size_t index){
 
 template <typename T>
 LazySequence<T>* LazySequence<T>::Concat(LazySequence<T>* other){
-    if (other == nullptr){
+    if(other == nullptr){
         throw NullPtrException("Null указатель");
     }
 
-    if (length.IsInfinite()){
+    if(length.IsInfinite()){
         throw Exception("Невозможно выполнить конкатенацию бесконечной последовательности");
     }
 
-    for (size_t i = 0; i < other->cache.GetLength(); i++){
+    for(size_t i = 0; i < other->cache.GetLength(); i++){
         cache.Append(other->cache.Get(i));
     }
 
@@ -289,89 +288,102 @@ LazySequence<T>* LazySequence<T>::Concat(LazySequence<T>* other){
 }
 
 template <typename T>
-template <typename U>
-LazySequence<U>* LazySequence<T>::Map(U (*func)(T), size_t count){
-    if (func == nullptr){
+LazySequence<T>::Iterator::Iterator(LazySequence<T>* s, size_t i) : seq(s), index(i) {}
+
+template <typename T>
+T LazySequence<T>::Iterator::operator*() {
+    seq->Checker_build(index);
+    return seq->Get(index);
+}
+
+template <typename T>
+typename LazySequence<T>::Iterator& LazySequence<T>::Iterator::operator++() {
+    index++;
+    return *this;
+}
+
+template <typename T>
+bool LazySequence<T>::Iterator::operator!=(const Iterator& other) const {
+    return index != other.index;
+}
+
+template <typename T>
+typename LazySequence<T>::Iterator LazySequence<T>::begin(){
+    return Iterator(this, 0);
+}
+
+template <typename T>
+typename LazySequence<T>::Iterator LazySequence<T>::end(){
+    if (length.IsInfinite()){
+        return Iterator(this, static_cast<size_t>(-1));
+    }
+    return Iterator(this, length.GetValue());
+}
+
+template <typename T, typename U>
+LazySequence<U>* Map(LazySequence<T>* seq, U (*func)(T), size_t count){
+    if(seq == nullptr){
+        throw NullPtrException("Null указатель на последовательность");
+    }
+    if(func == nullptr){
         throw NullPtrException("Null указатель на функцию");
     }
 
     LazySequence<U>* result = new LazySequence<U>();
+    size_t current = 0;
 
-    for (size_t i = 0; i < count; i++){
-        result->Append(func(Get(i)));
+    for(auto item : *seq){
+        if (current >= count) break;
+        result->Append(func(item));
+        current++;
     }
 
     return result;
 }
 
 template <typename T>
-LazySequence<T>* LazySequence<T>::Where(bool (*pred)(T), size_t count){
-    if (pred == nullptr){
+LazySequence<T>* Where(LazySequence<T>* seq, bool (*pred)(T), size_t count){
+    if(seq == nullptr){
+        throw NullPtrException("Null указатель на последовательность");
+    }
+    if(pred == nullptr){
         throw NullPtrException("Null указатель на функцию");
     }
 
     LazySequence<T>* result = new LazySequence<T>();
+    size_t current = 0;
 
-    for (size_t i = 0; i < count; i++){
-        T item = Get(i);
-
-        if (pred(item)){
+    for(auto item : *seq){
+        if (current >= count) break;
+        
+        if(pred(item)){
             result->Append(item);
+            current++;
         }
     }
 
     return result;
 }
 
-template <typename T>
-template <typename U>
-U LazySequence<T>::Reduce(U (*func)(U, T), U initial, size_t count){
-    if (func == nullptr){
+template <typename T, typename U>
+U Reduce(LazySequence<T>* seq, U (*func)(U, T), U initial, size_t count){
+    if(seq == nullptr){
+        throw NullPtrException("Null указатель на последовательность");
+    }
+    if(func == nullptr){
         throw NullPtrException("Null указатель на функцию");
     }
 
     U result = initial;
+    size_t current = 0;
 
-    for (size_t i = 0; i < count; i++){
-        result = func(result, Get(i));
+    for(auto item : *seq){
+        if (current >= count){
+            break;
+        } 
+        result = func(result, item);
+        current++;
     }
 
     return result;
-}
-
-template <typename T>
-IEnumerator<T>* LazySequence<T>::GetEnumerator(){
-    class LazyEnumerator : public IEnumerator<T>{
-    private:
-        LazySequence<T>* seq;
-        size_t currentIndex;
-        T currentValue;
-
-    public:
-        LazyEnumerator(LazySequence<T>* sequence)
-            : seq(sequence), currentIndex(0) {}
-
-        bool MoveNext() override{
-            try{
-                if (seq->GetLength().IsInfinite() || currentIndex < seq->GetLength().GetValue()){
-                    currentValue = seq->Get(currentIndex);
-                    currentIndex++;
-                    return true;
-                }
-            } 
-            catch (...){
-                return false;
-            }
-            return false;
-        }
-
-        T Current() override{
-            return currentValue;
-        }
-
-        void Reset() override{
-            currentIndex = 0;
-        }
-    };
-    return new LazyEnumerator(this);
 }
