@@ -12,12 +12,12 @@ TEST_P(LazyConstructorTest, arr_constructor){
     if (testing::Test::HasFailure()){
         std::cout << "\n---Тестирование конструктора LazySequence от массива---\n";
         std::cout << "Исходный массив:{1, 2, 3}\n";
-        std::cout << "Запрашиваемый инsдекс: " << index << "\n";
+        std::cout << "Запрашиваемый индекс: " << index << "\n";
         std::cout << "Ожидаемое значение: " << expected << "\n";
     }
 }
 INSTANTIATE_TEST_SUITE_P(LazyArrParams, LazyConstructorTest, testing::Values(
-    std::make_tuple(0, 0), // 0 1
+    std::make_tuple(0, 1),
     std::make_tuple(1, 2),
     std::make_tuple(2, 3)
 ));
@@ -130,7 +130,7 @@ TEST_F(LazySequence_Fixture, concat_and_subsequence){
 
     if (testing::Test::HasFailure()){
         std::cout << "\n---Тестирование методов Concat и GetSubsequence---\n";
-        std::cout << "Конкатенация:{10, 20, 30} и{1, 2, 3}\n";
+        std::cout << "Конкатенация:{10, 20, 30} и {1, 2, 3}\n";
         std::cout << "Ожидаемый размер после Concat: 6\n";
         std::cout << "GetSubsequence от индекса 1 до 4. Ожидаемый результат:{20, 30, 1, 2}\n";
     }
@@ -155,7 +155,8 @@ class LazyFunctionalTest : public LazySequence_Fixture,
 
 TEST_P(LazyFunctionalTest, map_func){
     auto [index, expected] = GetParam();
-    LazySequence<int>* mapped = finite_lazy->Map(SquareMap, finite_lazy->GetLength().GetValue());
+    // ИСПРАВЛЕНИЕ: Map вынесена из класса
+    LazySequence<int>* mapped = Map(finite_lazy, SquareMap, finite_lazy->GetLength().GetValue());
     EXPECT_TRUE(CheckVal(mapped->Get(index), expected));
 
     if (testing::Test::HasFailure()){
@@ -173,11 +174,13 @@ INSTANTIATE_TEST_SUITE_P(LazyMapParams, LazyFunctionalTest, testing::Values(
 ));
 
 TEST_F(LazySequence_Fixture, where_and_reduce){
-    LazySequence<int>* filtered = finite_lazy->Where(IsEven, finite_lazy->GetLength().GetValue());
-    EXPECT_TRUE(CheckSize(filtered->GetLength().GetValue(), 3));
+    // ИСПРАВЛЕНИЕ: Where вынесена из класса
+    LazySequence<int>* filtered = Where(finite_lazy, IsEven, finite_lazy->GetLength().GetValue());
+    EXPECT_TRUE(CheckSize(filtered->GetLength().GetValue(), 3)); // Обрати внимание: если IsEven это x%2==0, в {10,20,30} их 3 штуки
     EXPECT_TRUE(CheckVal(filtered->Get(1), 20));
     
-    int sum = finite_lazy->Reduce(SumReduce, 0, finite_lazy->GetLength().GetValue());
+    // ИСПРАВЛЕНИЕ: Reduce вынесена из класса
+    int sum = Reduce(finite_lazy, SumReduce, 0, finite_lazy->GetLength().GetValue());
     EXPECT_TRUE(CheckVal(sum, 60));
 
     if (testing::Test::HasFailure()){

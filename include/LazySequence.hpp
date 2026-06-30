@@ -17,15 +17,7 @@ public:
     bool IsInfinite() const;
     size_t GetValue() const;
 
-    bool operator==(const Cardinal& other){
-        if(isInfinite == other.IsInfinite()){
-            return true;
-        }
-        if(isInfinite != other.IsInfinite()){
-            return false;
-        }
-        return value == other.GetValue();
-    }
+    bool operator==(const Cardinal& other) const;
 };
 
 template <typename T>
@@ -110,7 +102,7 @@ void LazySequence<T>::Checker_build(size_t index){
     }
 
     if(cache.Get(index) == T()){
-        cache[index] = generator(&cache);
+        cache.Set(index, generator(&cache)); 
     }
 }
 
@@ -305,6 +297,16 @@ typename LazySequence<T>::Iterator& LazySequence<T>::Iterator::operator++() {
 template <typename T>
 bool LazySequence<T>::Iterator::operator!=(const Iterator& other) const {
     return index != other.index;
+}
+
+inline bool Cardinal::operator==(const Cardinal& other) const{
+    if((isInfinite == other.IsInfinite()) && isInfinite == true){
+        return true;
+    }
+    if(isInfinite != other.IsInfinite()){
+        return false;
+    }
+    return value == other.GetValue();
 }
 
 template <typename T>
